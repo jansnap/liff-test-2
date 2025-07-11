@@ -3,18 +3,6 @@ $(document).ready(function () {
     // LINE DevelopersのLIFF画面より確認可能
     var liffId = "2007732537-K8gaZLDe";
     initializeLiff(liffId);
-    window.liffData = {
-        imageDataUrl: null,
-        location: null
-    };
-    // カメラボタン
-    $('#camera-btn').on('click', function() {
-        openCamera();
-    });
-    // 位置情報ボタン
-    $('#location-btn').on('click', function() {
-        getLocation();
-    });
 });
 // カメラ撮影
 function openCamera() {
@@ -61,6 +49,17 @@ function initializeLiff(liffId) {
             liffId: liffId
         })
         .then(() => {
+            // LIFF初期化後にボタンイベントを登録
+            window.liffData = {
+                imageDataUrl: null,
+                location: null
+            };
+            $('#camera-btn').on('click', function() {
+                openCamera();
+            });
+            $('#location-btn').on('click', function() {
+                getLocation();
+            });
             // Webブラウザからアクセスされた場合は、LINEにログインする
             if (!liff.isInClient() && !liff.isLoggedIn()) {
                 window.alert("LINEアカウントにログインしてください。");
