@@ -25,10 +25,12 @@ function openCamera() {
         return;
     }
     liff.camera.openCamera({mode: 'picture'}).then(result => {
+        alert('カメラを起動しました！');
         if (result && result.dataUrl) {
             window.liffData.imageDataUrl = result.dataUrl;
             const preview = document.getElementById('photo-preview');
             preview.innerHTML = `<img src="${result.dataUrl}" class="img-fluid" style="max-width:300px;" />`;
+            alert('写真を撮影してプレビューを表示しました！');
         }
     }).catch(err => {
         alert('カメラ起動失敗: ' + err);
