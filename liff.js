@@ -8,12 +8,11 @@ $(document).ready(function () {
 function openCamera() {
     alert('openCamera called');
     var available = liff.isApiAvailable('camera');
+    alert('isApiAvailable(camera): ' + available);
+    // カメラAPIが利用可能か確認
     var preview = document.getElementById('photo-preview');
-    if (!preview) {
-        alert('photo-preview element not found');
-    } else {
-        preview.innerHTML = 'isApiAvailable(camera): ' + available;
-    }
+    preview.style.background = 'yellow';
+    preview.innerHTML = 'isApiAvailable(camera): ' + available;
     if (!available) {
         alert('カメラAPIが利用できません');
         return;
