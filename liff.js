@@ -6,6 +6,7 @@ $(document).ready(function () {
 });
 // カメラ撮影
 function openCamera() {
+    alert('openCamera called');
     var available = liff.isApiAvailable('camera');
     document.getElementById('photo-preview').innerHTML = 'isApiAvailable(camera): ' + available;
     if (!available) {
