@@ -57,6 +57,7 @@ function initializeLiff(liffId) {
             };
             $('#camera-btn').on('click', function() {
                 openCamera();
+                alert('camera-btn clicked');
             });
             $('#location-btn').on('click', function() {
                 getLocation();
