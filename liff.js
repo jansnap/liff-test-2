@@ -18,8 +18,9 @@ $(document).ready(function () {
 });
 // カメラ撮影
 function openCamera() {
-    console.log('isApiAvailable(camera):', liff.isApiAvailable('camera'));
-    if (!liff.isApiAvailable('camera')) {
+    var available = liff.isApiAvailable('camera');
+    document.getElementById('photo-preview').innerHTML = 'isApiAvailable(camera): ' + available;
+    if (!available) {
         alert('カメラAPIが利用できません');
         return;
     }
