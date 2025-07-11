@@ -17,7 +17,7 @@ $(function () {
 
         // サーバ送信
         $.ajax({
-            url: '/api/upload', // ←送信先URLを適宜変更してください
+            url: 'https://enabling-manager-273478588192.asia-northeast1.run.app/api/upload',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
