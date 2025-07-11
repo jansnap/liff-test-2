@@ -1,35 +1,38 @@
 $(function () {
-    // カレンダー
-    $(function () {
-        $('input[name="date"]').datepicker({
-            dateFormat: 'yy/mm/dd',
-        });
-    });
+    // 新フォーム送信
+    $('#photo-form').submit(function (e) {
+        e.preventDefault();
+        var imageDataUrl = window.liffData.imageDataUrl;
+        var location = window.liffData.location;
+        var comment = $('#comment').val();
 
-    // 参加人数分の氏名欄を生成
-    $('#form-number').click(function () {
-        $('#form-name').empty();
-        var num = $('input[name="number"]:checked').val();
-        for (i = 0; i < num; i++) {
-            $('#form-name').append(
-                `<input class="form-control w-100 mt-1" name="name" maxlength="10">`
-            );
+        if (!imageDataUrl) {
+            alert('写真を撮影してください');
+            return false;
         }
-    });
+        if (!location) {
+            alert('位置情報を取得してください');
+            return false;
+        }
 
-    // 送信
-    $('form').submit(function () {
-        var date = $('input[name="date"]').val();
-        var number = $('input[name="number"]:checked').val();
-        var names = '';
-        $('#form-name').children().each(function (i, elm) {
-            names += $(elm).val() + '、';
-        })
-        names = names.slice(0, -1);
-
-        var msg = `希望日：${date}\n人数：${number}\n氏名：${names}`;
-        sendText(msg);
-
+        // サーバ送信
+        $.ajax({
+            url: '/api/upload', // ←送信先URLを適宜変更してください
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                image: imageDataUrl,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                comment: comment
+            }),
+            success: function (res) {
+                alert('送信しました！');
+            },
+            error: function (err) {
+                alert('送信に失敗しました: ' + err.statusText);
+            }
+        });
         return false;
     });
 });
