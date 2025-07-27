@@ -33,20 +33,7 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
     <script src="liff.js"></script>
     <script src="index.js"></script>
-    <script>
-        function openCamera() {
-            alert('openCamera called');
-            alert('typeof liff: ' + typeof liff);
-            var available;
-            try {
-                available = liff.isApiAvailable('camera');
-                alert('isApiAvailable(camera): ' + available);
-            } catch (e) {
-                alert('liff.isApiAvailable error: ' + e);
-            }
-            // ...existing code...
-        }
-    </script>
+
 </body>
 
 </html>
