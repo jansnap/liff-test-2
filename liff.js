@@ -89,6 +89,23 @@ function openCamera() {
                 console.log('ファイルサイズ:', file.size);
                 console.log('ファイルタイプ:', file.type);
 
+                // 即座にデータを保存（FileReader完了前）
+                const tempDataUrl = URL.createObjectURL(file);
+                console.log('一時的なdataUrl作成:', tempDataUrl);
+
+                // 即座にプレビューを表示
+                const preview = document.getElementById('photo-preview');
+                preview.style.background = 'white';
+                preview.innerHTML = `
+                    <div style="margin: 10px 0;">
+                        <img src="${tempDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                        <div style="margin-top: 10px; color: green; font-weight: bold;">
+                            ✓ 写真が撮影されました（処理中...）
+                        </div>
+                    </div>
+                `;
+                console.log('即座にプレビュー表示完了');
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     console.log('FileReader onload 実行');
@@ -107,7 +124,7 @@ function openCamera() {
                         console.error('ストレージ保存エラー:', e);
                     }
 
-                    // プレビューを即座に表示
+                    // 最終的なプレビューを表示
                     const preview = document.getElementById('photo-preview');
                     preview.style.background = 'white';
                     preview.innerHTML = `
@@ -118,7 +135,7 @@ function openCamera() {
                             </div>
                         </div>
                     `;
-                    console.log('プレビュー表示完了');
+                    console.log('最終プレビュー表示完了');
 
                     // 成功メッセージを表示（アラートではなく）
                     const successMsg = document.createElement('div');
@@ -332,6 +349,29 @@ function initializeLiff(liffId) {
                 </div>
             `;
             console.log('写真プレビューを復元しました');
+
+            // 復元成功メッセージを表示
+            const restoreMsg = document.createElement('div');
+            restoreMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #17a2b8;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+            `;
+            restoreMsg.textContent = '撮影データを復元しました';
+            document.body.appendChild(restoreMsg);
+
+            setTimeout(() => {
+                if (restoreMsg.parentNode) {
+                    restoreMsg.parentNode.removeChild(restoreMsg);
+                }
+            }, 3000);
         }
 
         if (window.liffData.location) {
@@ -339,6 +379,8 @@ function initializeLiff(liffId) {
             locationPreview.innerHTML = `緯度: ${window.liffData.location.latitude}<br>経度: ${window.liffData.location.longitude}`;
             console.log('位置情報プレビューを復元しました');
         }
+    } else {
+        console.log('保存されたデータが見つかりません');
     }
 
     // LIFF SDKのバージョンを確認
