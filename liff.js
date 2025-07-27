@@ -42,6 +42,17 @@ function openCamera() {
     }
 
     console.log('LINEアプリ内でカメラ撮影を開始します');
+    console.log('現在のliffData:', window.liffData);
+
+    // liffDataが存在しない場合は初期化
+    if (!window.liffData) {
+        console.log('liffDataが存在しないため初期化します');
+        window.liffData = {
+            imageDataUrl: null,
+            location: null,
+            lineId: null
+        };
+    }
 
     // カメラAPIが利用可能か確認
     var available = false;
@@ -89,6 +100,16 @@ function openCamera() {
                 console.log('ファイルサイズ:', file.size);
                 console.log('ファイルタイプ:', file.type);
 
+                // liffDataが存在しない場合は初期化
+                if (!window.liffData) {
+                    console.log('ファイル選択時にliffDataが存在しないため初期化します');
+                    window.liffData = {
+                        imageDataUrl: null,
+                        location: null,
+                        lineId: null
+                    };
+                }
+
                 // 既存のデータをクリア
                 console.log('既存のデータをクリアします');
                 try {
@@ -105,22 +126,36 @@ function openCamera() {
 
                 // 即座にプレビューを表示
                 const preview = document.getElementById('photo-preview');
-                preview.style.background = 'white';
-                preview.innerHTML = `
-                    <div style="margin: 10px 0;">
-                        <img src="${tempDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
-                        <div style="margin-top: 10px; color: green; font-weight: bold;">
-                            ✓ 写真が撮影されました（処理中...）
+                if (preview) {
+                    preview.style.background = 'white';
+                    preview.innerHTML = `
+                        <div style="margin: 10px 0;">
+                            <img src="${tempDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                            <div style="margin-top: 10px; color: green; font-weight: bold;">
+                                ✓ 写真が撮影されました（処理中...）
+                            </div>
                         </div>
-                    </div>
-                `;
-                console.log('即座にプレビュー表示完了');
+                    `;
+                    console.log('即座にプレビュー表示完了');
+                } else {
+                    console.error('photo-preview要素が見つかりません');
+                }
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     console.log('FileReader onload 実行');
                     const dataUrl = e.target.result;
                     console.log('dataUrl 生成完了, 長さ:', dataUrl.length);
+
+                    // liffDataが存在しない場合は初期化
+                    if (!window.liffData) {
+                        console.log('FileReader完了時にliffDataが存在しないため初期化します');
+                        window.liffData = {
+                            imageDataUrl: null,
+                            location: null,
+                            lineId: null
+                        };
+                    }
 
                     // データを保存
                     window.liffData.imageDataUrl = dataUrl;
@@ -136,16 +171,20 @@ function openCamera() {
 
                     // 最終的なプレビューを表示
                     const preview = document.getElementById('photo-preview');
-                    preview.style.background = 'white';
-                    preview.innerHTML = `
-                        <div style="margin: 10px 0;">
-                            <img src="${dataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
-                            <div style="margin-top: 10px; color: green; font-weight: bold;">
-                                ✓ 写真が撮影されました
+                    if (preview) {
+                        preview.style.background = 'white';
+                        preview.innerHTML = `
+                            <div style="margin: 10px 0;">
+                                <img src="${dataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                                <div style="margin-top: 10px; color: green; font-weight: bold;">
+                                    ✓ 写真が撮影されました
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    console.log('最終プレビュー表示完了');
+                        `;
+                        console.log('最終プレビュー表示完了');
+                    } else {
+                        console.error('最終プレビュー表示時にphoto-preview要素が見つかりません');
+                    }
 
                     // 成功メッセージを表示（アラートではなく）
                     const successMsg = document.createElement('div');
