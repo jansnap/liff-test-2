@@ -21,6 +21,8 @@ function openCamera() {
         return;
     }
 
+    console.log('liff.isInitialized(): ' + liff.isInitialized());
+
     // カメラAPIが利用可能か確認
     var available = liff.isApiAvailable('camera');
     console.log('isApiAvailable(camera): ' + available);
