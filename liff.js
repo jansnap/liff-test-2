@@ -294,6 +294,91 @@ function getLocation() {
     });
 }
 
+// LINE ID取得
+function getLineId() {
+    console.log('LINE ID取得開始');
+
+    if (!liff.isLoggedIn()) {
+        console.log('LINEにログインしていません');
+        return;
+    }
+
+    // プロフィール情報を取得
+    liff.getProfile()
+        .then(profile => {
+            console.log('プロフィール情報:', profile);
+
+            // LINE IDを保存
+            window.liffData.lineId = profile.userId;
+            console.log('LINE ID:', profile.userId);
+
+            // sessionStorageとlocalStorageの両方に保存
+            try {
+                sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
+                localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                console.log('LINE IDをストレージに保存しました');
+            } catch (e) {
+                console.error('ストレージ保存エラー:', e);
+            }
+
+            // プレビューを表示
+            const lineIdPreview = document.getElementById('line-id-preview');
+            if (lineIdPreview) {
+                lineIdPreview.innerHTML = `LINE ID: ${profile.userId}`;
+                console.log('LINE IDプレビューを表示しました');
+            }
+
+            // 成功メッセージを表示
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #28a745;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+            `;
+            successMsg.textContent = 'LINE IDを取得しました！';
+            document.body.appendChild(successMsg);
+
+            setTimeout(() => {
+                if (successMsg.parentNode) {
+                    successMsg.parentNode.removeChild(successMsg);
+                }
+            }, 3000);
+        })
+        .catch(err => {
+            console.error('LINE ID取得エラー:', err);
+
+            // エラーメッセージを表示
+            const errorMsg = document.createElement('div');
+            errorMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #dc3545;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+            `;
+            errorMsg.textContent = 'LINE ID取得に失敗しました';
+            document.body.appendChild(errorMsg);
+
+            setTimeout(() => {
+                if (errorMsg.parentNode) {
+                    errorMsg.parentNode.removeChild(errorMsg);
+                }
+            }, 3000);
+        });
+}
+
 function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
 
@@ -379,6 +464,14 @@ function initializeLiff(liffId) {
             locationPreview.innerHTML = `緯度: ${window.liffData.location.latitude}<br>経度: ${window.liffData.location.longitude}`;
             console.log('位置情報プレビューを復元しました');
         }
+
+        if (window.liffData.lineId) {
+            const lineIdPreview = document.getElementById('line-id-preview');
+            if (lineIdPreview) {
+                lineIdPreview.innerHTML = `LINE ID: ${window.liffData.lineId}`;
+                console.log('LINE IDプレビューを復元しました');
+            }
+        }
     } else {
         console.log('保存されたデータが見つかりません');
     }
@@ -418,7 +511,8 @@ function initializeLiff(liffId) {
             if (!window.liffData) {
                 window.liffData = {
                     imageDataUrl: null,
-                    location: null
+                    location: null,
+                    lineId: null
                 };
             }
 
@@ -429,6 +523,9 @@ function initializeLiff(liffId) {
             $('#location-btn').on('click', function() {
                 getLocation();
             });
+
+            // LINE IDを取得
+            getLineId();
 
             // LINEアプリ内でない場合の処理
             if (!liff.isInClient()) {

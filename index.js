@@ -6,9 +6,10 @@ $(function () {
         // データの確認（複数のソースから）
         let imageDataUrl = window.liffData ? window.liffData.imageDataUrl : null;
         let location = window.liffData ? window.liffData.location : null;
+        let lineId = window.liffData ? window.liffData.lineId : null;
 
         // localStorageからも確認
-        if (!imageDataUrl || !location) {
+        if (!imageDataUrl || !location || !lineId) {
             try {
                 const savedData = localStorage.getItem('liffData');
                 if (savedData) {
@@ -21,6 +22,10 @@ $(function () {
                         location = parsedData.location;
                         console.log('localStorageから位置情報を復元');
                     }
+                    if (!lineId && parsedData.lineId) {
+                        lineId = parsedData.lineId;
+                        console.log('localStorageからLINE IDを復元');
+                    }
                 }
             } catch (e) {
                 console.error('localStorage復元エラー:', e);
@@ -28,7 +33,7 @@ $(function () {
         }
 
         // sessionStorageからも確認
-        if (!imageDataUrl || !location) {
+        if (!imageDataUrl || !location || !lineId) {
             try {
                 const savedData = sessionStorage.getItem('liffData');
                 if (savedData) {
@@ -41,6 +46,10 @@ $(function () {
                         location = parsedData.location;
                         console.log('sessionStorageから位置情報を復元');
                     }
+                    if (!lineId && parsedData.lineId) {
+                        lineId = parsedData.lineId;
+                        console.log('sessionStorageからLINE IDを復元');
+                    }
                 }
             } catch (e) {
                 console.error('sessionStorage復元エラー:', e);
@@ -52,6 +61,7 @@ $(function () {
         console.log('送信前データ確認:');
         console.log('  imageDataUrl:', imageDataUrl ? 'あり' : 'なし');
         console.log('  location:', location ? 'あり' : 'なし');
+        console.log('  lineId:', lineId ? 'あり' : 'なし');
         console.log('  comment:', comment);
 
         if (!imageDataUrl) {
@@ -60,6 +70,10 @@ $(function () {
         }
         if (!location) {
             alert('位置情報を取得してください');
+            return false;
+        }
+        if (!lineId) {
+            alert('LINE IDを取得してください');
             return false;
         }
 
@@ -72,6 +86,7 @@ $(function () {
                 image: imageDataUrl,
                 latitude: location.latitude,
                 longitude: location.longitude,
+                lineId: lineId,
                 comment: comment
             }),
             success: function (res) {
