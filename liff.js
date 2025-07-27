@@ -89,6 +89,16 @@ function openCamera() {
                 console.log('ファイルサイズ:', file.size);
                 console.log('ファイルタイプ:', file.type);
 
+                // 既存のデータをクリア
+                console.log('既存のデータをクリアします');
+                try {
+                    localStorage.removeItem('liffData');
+                    sessionStorage.removeItem('liffData');
+                    console.log('localStorageとsessionStorageをクリアしました');
+                } catch (e) {
+                    console.error('ストレージクリアエラー:', e);
+                }
+
                 // 即座にデータを保存（FileReader完了前）
                 const tempDataUrl = URL.createObjectURL(file);
                 console.log('一時的なdataUrl作成:', tempDataUrl);
@@ -303,6 +313,9 @@ function getLineId() {
         return;
     }
 
+    console.log('liff.isLoggedIn():', liff.isLoggedIn());
+    console.log('liff.isInClient():', liff.isInClient());
+
     // プロフィール情報を取得
     liff.getProfile()
         .then(profile => {
@@ -326,6 +339,8 @@ function getLineId() {
             if (lineIdPreview) {
                 lineIdPreview.innerHTML = `LINE ID: ${profile.userId}`;
                 console.log('LINE IDプレビューを表示しました');
+            } else {
+                console.error('line-id-preview要素が見つかりません');
             }
 
             // 成功メッセージを表示
@@ -353,6 +368,7 @@ function getLineId() {
         })
         .catch(err => {
             console.error('LINE ID取得エラー:', err);
+            console.error('エラー詳細:', err.message);
 
             // エラーメッセージを表示
             const errorMsg = document.createElement('div');
@@ -368,15 +384,81 @@ function getLineId() {
                 z-index: 1000;
                 font-weight: bold;
             `;
-            errorMsg.textContent = 'LINE ID取得に失敗しました';
+            errorMsg.textContent = 'LINE ID取得に失敗しました: ' + err.message;
             document.body.appendChild(errorMsg);
 
             setTimeout(() => {
                 if (errorMsg.parentNode) {
                     errorMsg.parentNode.removeChild(errorMsg);
                 }
-            }, 3000);
+            }, 5000);
         });
+}
+
+// データクリア
+function clearAllData() {
+    console.log('データクリア開始');
+
+    // ストレージをクリア
+    try {
+        localStorage.removeItem('liffData');
+        sessionStorage.removeItem('liffData');
+        console.log('ストレージをクリアしました');
+    } catch (e) {
+        console.error('ストレージクリアエラー:', e);
+    }
+
+    // メモリ上のデータをクリア
+    window.liffData = {
+        imageDataUrl: null,
+        location: null,
+        lineId: null
+    };
+
+    // プレビューをクリア
+    const photoPreview = document.getElementById('photo-preview');
+    if (photoPreview) {
+        photoPreview.style.background = '';
+        photoPreview.innerHTML = '';
+    }
+
+    const locationPreview = document.getElementById('location-preview');
+    if (locationPreview) {
+        locationPreview.innerHTML = '';
+    }
+
+    const lineIdPreview = document.getElementById('line-id-preview');
+    if (lineIdPreview) {
+        lineIdPreview.innerHTML = '';
+    }
+
+    // コメント欄もクリア
+    $('#comment').val('');
+
+    // 成功メッセージを表示
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffc107;
+        color: black;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+        font-weight: bold;
+    `;
+    successMsg.textContent = 'データをクリアしました！';
+    document.body.appendChild(successMsg);
+
+    setTimeout(() => {
+        if (successMsg.parentNode) {
+            successMsg.parentNode.removeChild(successMsg);
+        }
+    }, 3000);
+
+    console.log('データクリア完了');
 }
 
 function initializeLiff(liffId) {
@@ -522,6 +604,11 @@ function initializeLiff(liffId) {
 
             $('#location-btn').on('click', function() {
                 getLocation();
+            });
+
+            // クリアボタンの処理
+            $('#clear-btn').on('click', function() {
+                clearAllData();
             });
 
             // LINE IDを取得
