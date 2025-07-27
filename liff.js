@@ -15,13 +15,11 @@ function openCamera() {
         return;
     }
 
-    // LIFFが初期化されているか確認
-    if (!liff.isInitialized()) {
-        alert('LIFFが初期化されていません。しばらく待ってから再試行してください。');
-        return;
-    }
-
-    console.log('liff.isInitialized(): ' + liff.isInitialized());
+    // LIFF SDKの情報を出力
+    console.log('LIFF SDK Version:', liff.version);
+    console.log('LIFF SDK Build:', liff.build);
+    console.log('LIFF isInClient:', liff.isInClient());
+    console.log('LIFF isLoggedIn:', liff.isLoggedIn());
 
     // カメラAPIが利用可能か確認
     var available = liff.isApiAvailable('camera');
@@ -74,12 +72,24 @@ function getLocation() {
 function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
 
+    // LIFF SDKのバージョンを確認
+    if (typeof liff !== 'undefined') {
+        console.log('LIFF SDK Version:', liff.version);
+        console.log('LIFF SDK Build:', liff.build);
+    }
+
     liff
         .init({
             liffId: liffId
         })
         .then(() => {
             console.log('LIFF初期化成功');
+
+            // LIFFの準備が完了するまで待つ
+            return liff.ready;
+        })
+        .then(() => {
+            console.log('LIFF準備完了');
 
             // LIFF初期化後にボタンイベントを登録
             window.liffData = {
