@@ -16,14 +16,16 @@ function openCamera() {
     }
 
     // LIFF SDKの情報を出力
-    console.log('LIFF SDK Version:', liff.version);
-    console.log('LIFF SDK Build:', liff.build);
+    console.log('LIFF SDK Version:', liff.getVersion());
+    if (liff.build !== undefined) {
+        console.log('LIFF SDK Build:', liff.build);
+    }
     console.log('LIFF isInClient:', liff.isInClient());
     console.log('LIFF isLoggedIn:', liff.isLoggedIn());
 
-    // 利用可能なAPIを確認
+    // 利用可能なAPIを確認（LIFF SDK 2.27.1で利用可能なもののみ）
     console.log('Available APIs:');
-    const apis = ['camera', 'profile', 'friendship', 'shareTargetPicker', 'scanCode', 'openWindow'];
+    const apis = ['shareTargetPicker', 'scanCodeV2', 'permanentLink', 'i18n', 'iap'];
     apis.forEach(api => {
         try {
             const available = liff.isApiAvailable(api);
@@ -33,11 +35,19 @@ function openCamera() {
         }
     });
 
+    // LINEアプリ内でない場合はカメラAPIが利用できない
+    if (!liff.isInClient()) {
+        alert('カメラAPIはLINEアプリ内でのみ利用可能です。LINEアプリ内でアクセスしてください。');
+        return;
+    }
+
     // カメラAPIが利用可能か確認
     var available = false;
     try {
-        available = liff.isApiAvailable('camera');
-        console.log('isApiAvailable(camera): ' + available);
+        // LIFF SDK 2.27.1ではカメラAPIが利用できない可能性があるため、
+        // 代替手段としてファイル選択を使用
+        available = true; // 一旦trueに設定
+        console.log('カメラAPIの代替手段を使用します');
     } catch (e) {
         console.error('カメラAPI確認エラー:', e);
         alert('カメラAPIが利用できません: ' + e.message);
@@ -46,33 +56,35 @@ function openCamera() {
 
     var preview = document.getElementById('photo-preview');
     preview.style.background = 'yellow';
-    preview.innerHTML = 'isApiAvailable(camera): ' + available;
+    preview.innerHTML = 'カメラAPIの代替手段を使用します';
 
     if (!available) {
         alert('カメラAPIが利用できません。LINEアプリ内でアクセスしてください。');
         return;
     }
 
-    // カメラを開く
-    try {
-        liff.camera.openCamera({mode: 'picture'})
-            .then(result => {
-                console.log('カメラを起動しました！');
-                if (result && result.dataUrl) {
-                    window.liffData.imageDataUrl = result.dataUrl;
-                    const preview = document.getElementById('photo-preview');
-                    preview.innerHTML = `<img src="${result.dataUrl}" class="img-fluid" style="max-width:300px;" />`;
-                    alert('写真を撮影してプレビューを表示しました！');
-                }
-            })
-            .catch(err => {
-                console.error('カメラ起動失敗:', err);
-                alert('カメラ起動失敗: ' + err.message || err);
-            });
-    } catch (e) {
-        console.error('カメラAPI呼び出しエラー:', e);
-        alert('カメラAPI呼び出しエラー: ' + e.message);
-    }
+    // ファイル選択による代替手段
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'camera'; // カメラを優先
+
+    fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                window.liffData.imageDataUrl = dataUrl;
+                const preview = document.getElementById('photo-preview');
+                preview.innerHTML = `<img src="${dataUrl}" class="img-fluid" style="max-width:300px;" />`;
+                alert('写真を選択してプレビューを表示しました！');
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    fileInput.click();
 }
 
 // 位置情報取得
@@ -98,8 +110,12 @@ function initializeLiff(liffId) {
 
     // LIFF SDKのバージョンを確認
     if (typeof liff !== 'undefined') {
-        console.log('LIFF SDK Version:', liff.version);
-        console.log('LIFF SDK Build:', liff.build);
+        console.log('LIFF SDK Version:', liff.getVersion());
+
+        // build情報も出力（存在する場合）
+        if (liff.build !== undefined) {
+            console.log('LIFF SDK Build:', liff.build);
+        }
 
         // 利用可能なプロパティを確認
         console.log('LIFF SDK Properties:');
