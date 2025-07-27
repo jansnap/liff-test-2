@@ -78,6 +78,8 @@ function openCamera() {
 
     // LINEアプリ内でのカメラ撮影処理
     try {
+        console.log('カメラ撮影処理開始');
+
         // ファイル選択による代替手段
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -110,12 +112,32 @@ function openCamera() {
                     };
                 }
 
-                // 既存のデータをクリア
-                console.log('既存のデータをクリアします');
+                // 既存の画像データのみをクリア（LINE IDは保持）
+                console.log('既存の画像データをクリアします');
                 try {
-                    localStorage.removeItem('liffData');
-                    sessionStorage.removeItem('liffData');
-                    console.log('localStorageとsessionStorageをクリアしました');
+                    const currentData = localStorage.getItem('liffData');
+                    if (currentData) {
+                        const parsedData = JSON.parse(currentData);
+                        // LINE IDを保持
+                        const lineId = parsedData.lineId;
+                        const location = parsedData.location;
+
+                        // 画像データのみクリア
+                        localStorage.removeItem('liffData');
+                        sessionStorage.removeItem('liffData');
+
+                        // LINE IDと位置情報を保持した新しいデータを作成
+                        window.liffData = {
+                            imageDataUrl: null,
+                            location: location,
+                            lineId: lineId
+                        };
+                        console.log('LINE IDと位置情報を保持しました');
+                    } else {
+                        localStorage.removeItem('liffData');
+                        sessionStorage.removeItem('liffData');
+                    }
+                    console.log('画像データをクリアしました');
                 } catch (e) {
                     console.error('ストレージクリアエラー:', e);
                 }
@@ -157,8 +179,9 @@ function openCamera() {
                         };
                     }
 
-                    // データを保存
+                    // 画像データのみを更新（LINE IDは保持）
                     window.liffData.imageDataUrl = dataUrl;
+                    console.log('画像データを更新しました');
 
                     // sessionStorageとlocalStorageの両方に保存
                     try {
@@ -650,8 +673,12 @@ function initializeLiff(liffId) {
                 clearAllData();
             });
 
-            // LINE IDを取得
-            getLineId();
+            // LINE IDを取得（一度だけ）
+            if (!window.liffData.lineId) {
+                getLineId();
+            } else {
+                console.log('LINE IDは既に取得済みです:', window.liffData.lineId);
+            }
 
             // LINEアプリ内でない場合の処理
             if (!liff.isInClient()) {
@@ -670,4 +697,3 @@ function initializeLiff(liffId) {
             alert('LIFF初期化に失敗しました: ' + err.message);
         });
 }
-
