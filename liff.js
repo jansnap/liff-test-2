@@ -98,15 +98,16 @@ function openCamera() {
                     // データを保存
                     window.liffData.imageDataUrl = dataUrl;
 
-                    // sessionStorageに保存
+                    // sessionStorageとlocalStorageの両方に保存
                     try {
                         sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
-                        console.log('データをsessionStorageに保存しました');
+                        localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                        console.log('データをsessionStorageとlocalStorageに保存しました');
                     } catch (e) {
-                        console.error('sessionStorage保存エラー:', e);
+                        console.error('ストレージ保存エラー:', e);
                     }
 
-                    // プレビューを表示
+                    // プレビューを即座に表示
                     const preview = document.getElementById('photo-preview');
                     preview.style.background = 'white';
                     preview.innerHTML = `
@@ -145,6 +146,14 @@ function openCamera() {
 
                     // フォームの状態を確認
                     console.log('現在のliffData:', window.liffData);
+
+                    // データが正しく保存されているか確認
+                    setTimeout(() => {
+                        const savedData = localStorage.getItem('liffData');
+                        console.log('保存確認 - localStorage:', savedData ? '保存済み' : '未保存');
+                        const sessionData = sessionStorage.getItem('liffData');
+                        console.log('保存確認 - sessionStorage:', sessionData ? '保存済み' : '未保存');
+                    }, 1000);
                 };
 
                 reader.onerror = function(e) {
@@ -252,12 +261,13 @@ function getLocation() {
             longitude: pos.coords.longitude
         };
 
-        // sessionStorageに保存
+        // sessionStorageとlocalStorageの両方に保存
         try {
             sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
-            console.log('位置情報をsessionStorageに保存しました');
+            localStorage.setItem('liffData', JSON.stringify(window.liffData));
+            console.log('位置情報をsessionStorageとlocalStorageに保存しました');
         } catch (e) {
-            console.error('sessionStorage保存エラー:', e);
+            console.error('ストレージ保存エラー:', e);
         }
 
         const preview = document.getElementById('location-preview');
@@ -270,33 +280,64 @@ function getLocation() {
 function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
 
-    // ページの状態を復元
+    // ページリロード検知
+    window.addEventListener('beforeunload', function() {
+        console.log('ページリロード検知 - データを保存');
+        if (window.liffData) {
+            try {
+                localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                console.log('localStorageにデータを保存しました');
+            } catch (e) {
+                console.error('localStorage保存エラー:', e);
+            }
+        }
+    });
+
+    // ページの状態を復元（sessionStorageとlocalStorageの両方から）
+    let savedData = null;
+
+    // まずsessionStorageから復元を試行
     if (sessionStorage.getItem('liffData')) {
         try {
-            const savedData = JSON.parse(sessionStorage.getItem('liffData'));
-            window.liffData = savedData;
-            console.log('保存されたデータを復元:', window.liffData);
-
-            // プレビューを復元
-            if (window.liffData.imageDataUrl) {
-                const preview = document.getElementById('photo-preview');
-                preview.style.background = 'white';
-                preview.innerHTML = `
-                    <div style="margin: 10px 0;">
-                        <img src="${window.liffData.imageDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
-                        <div style="margin-top: 10px; color: green; font-weight: bold;">
-                            ✓ 写真が撮影されました
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (window.liffData.location) {
-                const locationPreview = document.getElementById('location-preview');
-                locationPreview.innerHTML = `緯度: ${window.liffData.location.latitude}<br>経度: ${window.liffData.location.longitude}`;
-            }
+            savedData = JSON.parse(sessionStorage.getItem('liffData'));
+            console.log('sessionStorageからデータを復元:', savedData);
         } catch (e) {
-            console.error('保存されたデータの復元エラー:', e);
+            console.error('sessionStorage復元エラー:', e);
+        }
+    }
+
+    // sessionStorageにない場合はlocalStorageから復元
+    if (!savedData && localStorage.getItem('liffData')) {
+        try {
+            savedData = JSON.parse(localStorage.getItem('liffData'));
+            console.log('localStorageからデータを復元:', savedData);
+        } catch (e) {
+            console.error('localStorage復元エラー:', e);
+        }
+    }
+
+    if (savedData) {
+        window.liffData = savedData;
+
+        // プレビューを復元
+        if (window.liffData.imageDataUrl) {
+            const preview = document.getElementById('photo-preview');
+            preview.style.background = 'white';
+            preview.innerHTML = `
+                <div style="margin: 10px 0;">
+                    <img src="${window.liffData.imageDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                    <div style="margin-top: 10px; color: green; font-weight: bold;">
+                        ✓ 写真が撮影されました
+                    </div>
+                </div>
+            `;
+            console.log('写真プレビューを復元しました');
+        }
+
+        if (window.liffData.location) {
+            const locationPreview = document.getElementById('location-preview');
+            locationPreview.innerHTML = `緯度: ${window.liffData.location.latitude}<br>経度: ${window.liffData.location.longitude}`;
+            console.log('位置情報プレビューを復元しました');
         }
     }
 
