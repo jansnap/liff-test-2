@@ -41,6 +41,8 @@ function openCamera() {
         return;
     }
 
+    console.log('LINEアプリ内でカメラ撮影を開始します');
+
     // カメラAPIが利用可能か確認
     var available = false;
     try {
@@ -63,28 +65,74 @@ function openCamera() {
         return;
     }
 
-    // ファイル選択による代替手段
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.capture = 'camera'; // カメラを優先
+    // LINEアプリ内でのカメラ撮影処理
+    try {
+        // ファイル選択による代替手段
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.capture = 'camera'; // カメラを優先
 
-    fileInput.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const dataUrl = e.target.result;
-                window.liffData.imageDataUrl = dataUrl;
-                const preview = document.getElementById('photo-preview');
-                preview.innerHTML = `<img src="${dataUrl}" class="img-fluid" style="max-width:300px;" />`;
-                alert('写真を選択してプレビューを表示しました！');
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+        // タイムアウト処理を追加
+        const timeoutId = setTimeout(() => {
+            console.log('ファイル選択タイムアウト');
+            alert('ファイル選択がタイムアウトしました。再度お試しください。');
+        }, 30000); // 30秒タイムアウト
 
-    fileInput.click();
+        fileInput.onchange = function(e) {
+            clearTimeout(timeoutId); // タイムアウトをクリア
+            console.log('ファイル選択イベント発生');
+            const file = e.target.files[0];
+            console.log('選択されたファイル:', file);
+
+            if (file) {
+                console.log('ファイルサイズ:', file.size);
+                console.log('ファイルタイプ:', file.type);
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log('FileReader onload 実行');
+                    const dataUrl = e.target.result;
+                    console.log('dataUrl 生成完了, 長さ:', dataUrl.length);
+
+                    window.liffData.imageDataUrl = dataUrl;
+                    const preview = document.getElementById('photo-preview');
+                    preview.innerHTML = `<img src="${dataUrl}" class="img-fluid" style="max-width:300px;" />`;
+                    console.log('プレビュー表示完了');
+                    alert('写真を撮影してプレビューを表示しました！');
+                };
+
+                reader.onerror = function(e) {
+                    console.error('FileReader エラー:', e);
+                    alert('ファイル読み込みエラー: ' + e.target.error);
+                };
+
+                reader.onabort = function(e) {
+                    console.error('FileReader 中断:', e);
+                    alert('ファイル読み込みが中断されました');
+                };
+
+                console.log('FileReader readAsDataURL 開始');
+                reader.readAsDataURL(file);
+            } else {
+                console.log('ファイルが選択されていません');
+                alert('ファイルが選択されていません');
+            }
+        };
+
+        fileInput.onerror = function(e) {
+            clearTimeout(timeoutId); // タイムアウトをクリア
+            console.error('ファイル選択エラー:', e);
+            alert('ファイル選択エラーが発生しました');
+        };
+
+        console.log('ファイル選択ダイアログを開きます');
+        fileInput.click();
+
+    } catch (e) {
+        console.error('カメラ撮影処理エラー:', e);
+        alert('カメラ撮影処理でエラーが発生しました: ' + e.message);
+    }
 }
 
 // 位置情報取得
