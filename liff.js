@@ -95,28 +95,133 @@ function openCamera() {
                     const dataUrl = e.target.result;
                     console.log('dataUrl 生成完了, 長さ:', dataUrl.length);
 
+                    // データを保存
                     window.liffData.imageDataUrl = dataUrl;
+
+                    // sessionStorageに保存
+                    try {
+                        sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
+                        console.log('データをsessionStorageに保存しました');
+                    } catch (e) {
+                        console.error('sessionStorage保存エラー:', e);
+                    }
+
+                    // プレビューを表示
                     const preview = document.getElementById('photo-preview');
-                    preview.innerHTML = `<img src="${dataUrl}" class="img-fluid" style="max-width:300px;" />`;
+                    preview.style.background = 'white';
+                    preview.innerHTML = `
+                        <div style="margin: 10px 0;">
+                            <img src="${dataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                            <div style="margin-top: 10px; color: green; font-weight: bold;">
+                                ✓ 写真が撮影されました
+                            </div>
+                        </div>
+                    `;
                     console.log('プレビュー表示完了');
-                    alert('写真を撮影してプレビューを表示しました！');
+
+                    // 成功メッセージを表示（アラートではなく）
+                    const successMsg = document.createElement('div');
+                    successMsg.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #28a745;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        z-index: 1000;
+                        font-weight: bold;
+                    `;
+                    successMsg.textContent = '写真を撮影しました！';
+                    document.body.appendChild(successMsg);
+
+                    // 3秒後にメッセージを削除
+                    setTimeout(() => {
+                        if (successMsg.parentNode) {
+                            successMsg.parentNode.removeChild(successMsg);
+                        }
+                    }, 3000);
+
+                    // フォームの状態を確認
+                    console.log('現在のliffData:', window.liffData);
                 };
 
                 reader.onerror = function(e) {
                     console.error('FileReader エラー:', e);
-                    alert('ファイル読み込みエラー: ' + e.target.error);
+                    const errorMsg = document.createElement('div');
+                    errorMsg.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #dc3545;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        z-index: 1000;
+                        font-weight: bold;
+                    `;
+                    errorMsg.textContent = 'ファイル読み込みエラー';
+                    document.body.appendChild(errorMsg);
+
+                    setTimeout(() => {
+                        if (errorMsg.parentNode) {
+                            errorMsg.parentNode.removeChild(errorMsg);
+                        }
+                    }, 3000);
                 };
 
                 reader.onabort = function(e) {
                     console.error('FileReader 中断:', e);
-                    alert('ファイル読み込みが中断されました');
+                    const abortMsg = document.createElement('div');
+                    abortMsg.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #ffc107;
+                        color: black;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        z-index: 1000;
+                        font-weight: bold;
+                    `;
+                    abortMsg.textContent = 'ファイル読み込みが中断されました';
+                    document.body.appendChild(abortMsg);
+
+                    setTimeout(() => {
+                        if (abortMsg.parentNode) {
+                            abortMsg.parentNode.removeChild(abortMsg);
+                        }
+                    }, 3000);
                 };
 
                 console.log('FileReader readAsDataURL 開始');
                 reader.readAsDataURL(file);
             } else {
                 console.log('ファイルが選択されていません');
-                alert('ファイルが選択されていません');
+                const noFileMsg = document.createElement('div');
+                noFileMsg.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #6c757d;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    font-weight: bold;
+                `;
+                noFileMsg.textContent = 'ファイルが選択されていません';
+                document.body.appendChild(noFileMsg);
+
+                setTimeout(() => {
+                    if (noFileMsg.parentNode) {
+                        noFileMsg.parentNode.removeChild(noFileMsg);
+                    }
+                }, 3000);
             }
         };
 
@@ -146,6 +251,15 @@ function getLocation() {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude
         };
+
+        // sessionStorageに保存
+        try {
+            sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
+            console.log('位置情報をsessionStorageに保存しました');
+        } catch (e) {
+            console.error('sessionStorage保存エラー:', e);
+        }
+
         const preview = document.getElementById('location-preview');
         preview.innerHTML = `緯度: ${pos.coords.latitude}<br>経度: ${pos.coords.longitude}`;
     }, function(err) {
@@ -155,6 +269,36 @@ function getLocation() {
 
 function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
+
+    // ページの状態を復元
+    if (sessionStorage.getItem('liffData')) {
+        try {
+            const savedData = JSON.parse(sessionStorage.getItem('liffData'));
+            window.liffData = savedData;
+            console.log('保存されたデータを復元:', window.liffData);
+
+            // プレビューを復元
+            if (window.liffData.imageDataUrl) {
+                const preview = document.getElementById('photo-preview');
+                preview.style.background = 'white';
+                preview.innerHTML = `
+                    <div style="margin: 10px 0;">
+                        <img src="${window.liffData.imageDataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                        <div style="margin-top: 10px; color: green; font-weight: bold;">
+                            ✓ 写真が撮影されました
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (window.liffData.location) {
+                const locationPreview = document.getElementById('location-preview');
+                locationPreview.innerHTML = `緯度: ${window.liffData.location.latitude}<br>経度: ${window.liffData.location.longitude}`;
+            }
+        } catch (e) {
+            console.error('保存されたデータの復元エラー:', e);
+        }
+    }
 
     // LIFF SDKのバージョンを確認
     if (typeof liff !== 'undefined') {
@@ -188,10 +332,12 @@ function initializeLiff(liffId) {
             console.log('LIFF準備完了');
 
             // LIFF初期化後にボタンイベントを登録
-            window.liffData = {
-                imageDataUrl: null,
-                location: null
-            };
+            if (!window.liffData) {
+                window.liffData = {
+                    imageDataUrl: null,
+                    location: null
+                };
+            }
 
             $('#camera-btn').on('click', function() {
                 openCamera();
