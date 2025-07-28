@@ -50,6 +50,16 @@ function openCamera() {
         // 代替手段としてファイル選択を使用
         available = true; // 一旦trueに設定
         console.log('カメラAPIの代替手段を使用します');
+
+        // 実際にLIFFカメラAPIを試す（利用可能な場合）
+        if (typeof liff.scanCodeV2 === 'function') {
+            console.log('LIFF scanCodeV2 APIが利用可能です');
+        }
+
+        // カメラAPIの利用可能性を確認
+        const cameraAvailable = liff.isApiAvailable && liff.isApiAvailable('scanCodeV2');
+        console.log('カメラAPI利用可能性:', cameraAvailable);
+
     } catch (e) {
         console.error('カメラAPI確認エラー:', e);
         alert('カメラAPIが利用できません: ' + e.message);
@@ -67,11 +77,23 @@ function openCamera() {
 
     // LINEアプリ内でのカメラ撮影処理
     try {
+        console.log('ファイル選択ダイアログを開きます');
+
         // ファイル選択による代替手段
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         fileInput.capture = 'camera'; // カメラを優先
+
+        // ファイル選択ダイアログを即座に開く
+        try {
+            fileInput.click();
+            console.log('ファイル選択ダイアログを開きました');
+        } catch (e) {
+            console.error('ファイル選択ダイアログを開けませんでした:', e);
+            alert('ファイル選択ダイアログを開けませんでした: ' + e.message);
+            return;
+        }
 
         // タイムアウト処理を追加
         const timeoutId = setTimeout(() => {
