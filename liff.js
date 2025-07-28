@@ -48,6 +48,26 @@ function showDebugInfo(title, data) {
         debugDiv.innerHTML = header + recentItems + debugInfo;
         debugDiv.scrollTop = debugDiv.scrollHeight;
 
+        // デバッグ情報をlocalStorageにも保存
+        try {
+            const debugLog = localStorage.getItem('debugLog') || '[]';
+            const debugArray = JSON.parse(debugLog);
+            debugArray.push({
+                timestamp: new Date().toISOString(),
+                title: title,
+                data: data
+            });
+
+            // 最新の20件のみ保持
+            if (debugArray.length > 20) {
+                debugArray.splice(0, debugArray.length - 20);
+            }
+
+            localStorage.setItem('debugLog', JSON.stringify(debugArray));
+        } catch (e) {
+            console.error('デバッグログ保存エラー:', e);
+        }
+
         console.log('Debug info displayed successfully');
     } catch (error) {
         console.error('showDebugInfo error:', error);
@@ -164,6 +184,27 @@ $(document).ready(function () {
         localStorageQuota: navigator.storage ? 'available' : 'not available',
         estimatedQuota: '5-10MB typical'
     });
+
+    // 保存されたデバッグログを表示
+    try {
+        const debugLog = localStorage.getItem('debugLog');
+        if (debugLog) {
+            const debugArray = JSON.parse(debugLog);
+            showDebugInfo('保存されたデバッグログ', {
+                debugLogCount: debugArray.length,
+                lastDebugTitle: debugArray.length > 0 ? debugArray[debugArray.length - 1].title : 'なし',
+                debugLogSize: debugLog.length
+            });
+
+            // 最新の5件のデバッグログを表示
+            const recentLogs = debugArray.slice(-5);
+            recentLogs.forEach(log => {
+                showDebugInfo(`[保存済み] ${log.title}`, log.data);
+            });
+        }
+    } catch (e) {
+        console.error('デバッグログ復元エラー:', e);
+    }
 
     // テスト用のアラートも表示
     setTimeout(() => {
@@ -648,6 +689,15 @@ function openCamera() {
                 };
 
                 console.log('FileReader readAsDataURL 開始');
+
+                // デバッグ情報を表示
+                showDebugInfo('FileReader readAsDataURL 開始', {
+                    fileSize: file.size,
+                    fileType: file.type,
+                    readerReady: reader.readyState,
+                    windowLiffDataExists: !!window.liffData
+                });
+
                 reader.readAsDataURL(file);
             } else {
                 console.log('ファイルが選択されていません');
