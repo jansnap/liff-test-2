@@ -75,6 +75,47 @@ function showDebugInfo(title, data) {
     }
 }
 
+// コンソールログをファイルにダウンロードする関数
+function downloadConsoleLog() {
+    try {
+        // localStorageからデバッグログを取得
+        const debugLog = localStorage.getItem('debugLog');
+        if (!debugLog) {
+            alert('デバッグログがありません');
+            return;
+        }
+
+        const debugArray = JSON.parse(debugLog);
+        const logText = debugArray.map(entry => {
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            return `[${timestamp}] ${entry.title}:\n${JSON.stringify(entry.data, null, 2)}\n`;
+        }).join('\n');
+
+        // ファイル名を生成
+        const now = new Date();
+        const fileName = `console_log_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.txt`;
+
+        // ダウンロードリンクを作成
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('コンソールログをダウンロードしました:', fileName);
+    } catch (e) {
+        console.error('コンソールログダウンロードエラー:', e);
+        alert('ダウンロードエラー: ' + e.message);
+    }
+}
+
+// グローバル関数として公開
+window.downloadConsoleLog = downloadConsoleLog;
+
 // デバッグ情報の表示/非表示を切り替えるグローバル関数
 function toggleDebugInfo() {
     const debugDiv = document.getElementById('debug-info');
@@ -115,11 +156,14 @@ function createDebugDiv() {
             display: block;
         `;
 
-        // ヘッダー部分に閉じるボタンを追加
+        // ヘッダー部分にボタンを追加
         const headerHtml = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #007bff;">
                 <span>デバッグ情報</span>
-                <button id="close-debug" onclick="document.getElementById('debug-info').style.display='none';" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 12px; cursor: pointer; font-weight: bold; min-width: 24px; min-height: 24px; display: inline-block; line-height: 1;">×</button>
+                <div>
+                    <button onclick="downloadConsoleLog()" style="background: #28a745; color: white; border: none; border-radius: 3px; padding: 4px 8px; margin-right: 5px; font-size: 10px; cursor: pointer;">DL</button>
+                    <button id="close-debug" onclick="document.getElementById('debug-info').style.display='none';" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 12px; cursor: pointer; font-weight: bold; min-width: 24px; min-height: 24px; display: inline-block; line-height: 1;">×</button>
+                </div>
             </div>
         `;
         debugDiv.innerHTML = headerHtml;
@@ -325,6 +369,13 @@ function openCamera() {
             const file = e.target.files[0];
             console.log('選択されたファイル:', file);
 
+            // スマホでの確認用にアラート表示
+            if (file) {
+                alert('ファイル選択完了！\nファイル名: ' + file.name + '\nサイズ: ' + file.size + 'バイト\nタイプ: ' + file.type);
+            } else {
+                alert('ファイルが選択されませんでした');
+            }
+
             // デバッグ情報を表示
             showDebugInfo('ファイル選択イベント発生', {
                 fileExists: !!file,
@@ -484,7 +535,7 @@ function openCamera() {
                         };
                     }
 
-                    // 画像データのみを更新（LINE IDは保持）
+                                        // 画像データのみを更新（LINE IDは保持）
                     window.liffData.imageDataUrl = dataUrl;
                     console.log('画像データを更新しました');
 
@@ -496,6 +547,28 @@ function openCamera() {
                         liffDataKeys: Object.keys(window.liffData),
                         liffDataSize: JSON.stringify(window.liffData).length
                     });
+
+                                        // 即座にlocalStorageに保存（ページリロード対策）
+                    try {
+                        localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                        console.log('画像データ更新後、即座にlocalStorageに保存しました');
+
+                        // スマホでの確認用にアラート表示
+                        alert('画像保存完了！\nサイズ: ' + JSON.stringify(window.liffData).length + '文字');
+
+                        showDebugInfo('即座保存完了', {
+                            savedSize: JSON.stringify(window.liffData).length,
+                            hasImageData: !!window.liffData.imageDataUrl,
+                            imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0
+                        });
+                    } catch (e) {
+                        console.error('即座保存エラー:', e);
+                        alert('保存エラー: ' + e.message);
+                        showDebugInfo('即座保存エラー', {
+                            error: e.toString(),
+                            errorMessage: e.message
+                        });
+                    }
 
                     // sessionStorageとlocalStorageの両方に保存
                     try {
@@ -945,9 +1018,58 @@ function initializeLiff(liffId) {
             try {
                 localStorage.setItem('liffData', JSON.stringify(window.liffData));
                 console.log('localStorageにデータを保存しました');
+
+                // デバッグ情報を表示
+                showDebugInfo('beforeunload保存', {
+                    liffDataExists: !!window.liffData,
+                    hasImageData: !!window.liffData.imageDataUrl,
+                    imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
+                    savedSize: JSON.stringify(window.liffData).length
+                });
             } catch (e) {
                 console.error('localStorage保存エラー:', e);
+                showDebugInfo('beforeunload保存エラー', {
+                    error: e.toString(),
+                    errorMessage: e.message
+                });
             }
+        } else {
+            console.log('window.liffDataが存在しません');
+            showDebugInfo('beforeunload保存失敗', {
+                liffDataExists: false,
+                reason: 'window.liffDataが存在しません'
+            });
+        }
+    });
+
+    // ページ離脱検知（より確実）
+    window.addEventListener('pagehide', function() {
+        console.log('ページ離脱検知 - データを保存');
+        if (window.liffData) {
+            try {
+                localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                console.log('localStorageにデータを保存しました（pagehide）');
+
+                // デバッグ情報を表示
+                showDebugInfo('pagehide保存', {
+                    liffDataExists: !!window.liffData,
+                    hasImageData: !!window.liffData.imageDataUrl,
+                    imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
+                    savedSize: JSON.stringify(window.liffData).length
+                });
+            } catch (e) {
+                console.error('localStorage保存エラー（pagehide）:', e);
+                showDebugInfo('pagehide保存エラー', {
+                    error: e.toString(),
+                    errorMessage: e.message
+                });
+            }
+        } else {
+            console.log('window.liffDataが存在しません（pagehide）');
+            showDebugInfo('pagehide保存失敗', {
+                liffDataExists: false,
+                reason: 'window.liffDataが存在しません'
+            });
         }
     });
 
