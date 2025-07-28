@@ -290,6 +290,17 @@ function openCamera() {
                 fileName: file ? file.name : 'なし',
                 fileSize: file ? file.size : 0,
                 fileType: file ? file.type : 'なし',
+                fileValid: file && file.size > 0 && file.type.startsWith('image/'),
+                windowLiffDataExists: !!window.liffData,
+                windowLiffDataContent: window.liffData
+            });
+
+            // デバッグ情報を表示
+            showDebugInfo('ファイル選択イベント発生', {
+                fileExists: !!file,
+                fileName: file ? file.name : 'なし',
+                fileSize: file ? file.size : 0,
+                fileType: file ? file.type : 'なし',
                 fileValid: file && file.size > 0 && file.type.startsWith('image/')
             });
 
@@ -410,6 +421,15 @@ function openCamera() {
                         dataUrlLength: dataUrl.length,
                         dataUrlStart: dataUrl.substring(0, 50) + '...',
                         dataUrlValid: dataUrl.startsWith('data:image/'),
+                        readyState: e.target.readyState,
+                        windowLiffDataExists: !!window.liffData
+                    });
+
+                    // デバッグ情報を表示
+                    showDebugInfo('FileReader onload 実行', {
+                        dataUrlLength: dataUrl.length,
+                        dataUrlStart: dataUrl.substring(0, 50) + '...',
+                        dataUrlValid: dataUrl.startsWith('data:image/'),
                         readyState: e.target.readyState
                     });
 
@@ -438,6 +458,9 @@ function openCamera() {
 
                     // sessionStorageとlocalStorageの両方に保存
                     try {
+                        console.log('保存処理開始 - window.liffData:', window.liffData);
+                        console.log('保存処理開始 - JSON.stringify(window.liffData):', JSON.stringify(window.liffData));
+
                         sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
                         localStorage.setItem('liffData', JSON.stringify(window.liffData));
                         console.log('データをsessionStorageとlocalStorageに保存しました');
