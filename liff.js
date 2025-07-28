@@ -595,3 +595,133 @@ function initializeLiff(liffId) {
         });
 }
 
+// コンソールログをファイルにダウンロードする関数
+function downloadConsoleLog() {
+    try {
+        // localStorageからデバッグログを取得
+        const debugLog = localStorage.getItem('debugLog');
+        if (!debugLog) {
+            alert('デバッグログがありません');
+            return;
+        }
+
+        const debugArray = JSON.parse(debugLog);
+        const logText = debugArray.map(entry => {
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            return `[${timestamp}] ${entry.title}:\n${JSON.stringify(entry.data, null, 2)}\n`;
+        }).join('\n');
+
+        // ファイル名を生成
+        const now = new Date();
+        const fileName = `console_log_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.txt`;
+
+        // ダウンロードリンクを作成
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('コンソールログをダウンロードしました:', fileName);
+    } catch (e) {
+        console.error('コンソールログダウンロードエラー:', e);
+        alert('ダウンロードエラー: ' + e.message);
+    }
+}
+
+// コンソールログを画面に表示する関数
+function showConsoleLog() {
+    try {
+        // 既存のログ表示エリアを削除
+        const existingLog = document.getElementById('console-log-display');
+        if (existingLog) {
+            existingLog.remove();
+        }
+
+        // ログ表示エリアを作成
+        const logDisplay = document.createElement('div');
+        logDisplay.id = 'console-log-display';
+        logDisplay.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 80%;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 10000;
+            font-family: monospace;
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        `;
+
+        // ヘッダー部分
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        `;
+        header.innerHTML = `
+            <h3 style="margin: 0; color: #007bff;">コンソールログ</h3>
+            <div>
+                <button onclick="downloadConsoleLog()" style="background: #28a745; color: white; border: none; padding: 5px 10px; margin-right: 5px; border-radius: 3px; cursor: pointer;">ダウンロード</button>
+                <button onclick="document.getElementById('console-log-display').remove()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">閉じる</button>
+            </div>
+        `;
+        logDisplay.appendChild(header);
+
+        // ログ内容
+        const debugLog = localStorage.getItem('debugLog');
+        if (debugLog) {
+            const debugArray = JSON.parse(debugLog);
+            const logContent = document.createElement('div');
+            logContent.style.cssText = `
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 5px;
+                white-space: pre-wrap;
+                word-break: break-all;
+            `;
+
+            const logText = debugArray.map(entry => {
+                const timestamp = new Date(entry.timestamp).toLocaleString();
+                return `[${timestamp}] ${entry.title}:\n${JSON.stringify(entry.data, null, 2)}\n`;
+            }).join('\n');
+
+            logContent.textContent = logText;
+            logDisplay.appendChild(logContent);
+        } else {
+            const noLogMsg = document.createElement('div');
+            noLogMsg.textContent = 'ログがありません';
+            noLogMsg.style.cssText = `
+                text-align: center;
+                color: #6c757d;
+                padding: 20px;
+            `;
+            logDisplay.appendChild(noLogMsg);
+        }
+
+        document.body.appendChild(logDisplay);
+        console.log('コンソールログを画面に表示しました');
+    } catch (e) {
+        console.error('コンソールログ表示エラー:', e);
+        alert('ログ表示エラー: ' + e.message);
+    }
+}
+
+// グローバル関数として公開
+window.downloadConsoleLog = downloadConsoleLog;
+window.showConsoleLog = showConsoleLog;
+
