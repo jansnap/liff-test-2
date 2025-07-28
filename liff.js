@@ -1,3 +1,42 @@
+// デバッグ情報表示関数
+function showDebugInfo(title, data) {
+    const debugDiv = document.getElementById('debug-info') || createDebugDiv();
+
+    const timestamp = new Date().toLocaleTimeString();
+    const debugInfo = `
+        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px;">
+            <strong style="color: #007bff;">[${timestamp}] ${title}</strong><br>
+            <pre style="margin: 5px 0; font-size: 12px; color: #6c757d;">${JSON.stringify(data, null, 2)}</pre>
+        </div>
+    `;
+
+    debugDiv.innerHTML += debugInfo;
+    debugDiv.scrollTop = debugDiv.scrollHeight;
+}
+
+function createDebugDiv() {
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'debug-info';
+    debugDiv.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 400px;
+        max-height: 300px;
+        background: white;
+        border: 2px solid #007bff;
+        border-radius: 5px;
+        padding: 10px;
+        overflow-y: auto;
+        z-index: 10000;
+        font-family: monospace;
+        font-size: 11px;
+    `;
+    debugDiv.innerHTML = '<div style="font-weight: bold; color: #007bff; margin-bottom: 10px;">デバッグ情報</div>';
+    document.body.appendChild(debugDiv);
+    return debugDiv;
+}
+
 $(document).ready(function () {
     // liffId: LIFF URL "https://liff.line.me/xxx"のxxxに該当する箇所
     // LINE DevelopersのLIFF画面より確認可能
@@ -54,6 +93,14 @@ function openCamera() {
         };
     }
 
+    // デバッグ情報を表示
+    showDebugInfo('カメラ撮影開始', {
+        liffDataExists: !!window.liffData,
+        liffDataContent: window.liffData,
+        isInClient: liff.isInClient(),
+        isLoggedIn: liff.isLoggedIn()
+    });
+
     // カメラAPIが利用可能か確認
     var available = false;
     try {
@@ -97,6 +144,14 @@ function openCamera() {
             console.log('ファイル選択イベント発生');
             const file = e.target.files[0];
             console.log('選択されたファイル:', file);
+
+            // デバッグ情報を表示
+            showDebugInfo('ファイル選択イベント発生', {
+                fileExists: !!file,
+                fileName: file ? file.name : 'なし',
+                fileSize: file ? file.size : 0,
+                fileType: file ? file.type : 'なし'
+            });
 
             if (file) {
                 console.log('ファイルサイズ:', file.size);
@@ -159,8 +214,18 @@ function openCamera() {
                         </div>
                     `;
                     console.log('即座にプレビュー表示完了');
+
+                    // デバッグ情報を表示
+                    showDebugInfo('即座プレビュー表示完了', {
+                        previewElementExists: !!preview,
+                        tempDataUrl: tempDataUrl.substring(0, 50) + '...',
+                        previewInnerHTML: preview.innerHTML.substring(0, 100) + '...'
+                    });
                 } else {
                     console.error('photo-preview要素が見つかりません');
+                    showDebugInfo('エラー: photo-preview要素が見つかりません', {
+                        error: 'photo-preview要素が見つかりません'
+                    });
                 }
 
                 const reader = new FileReader();
@@ -205,8 +270,20 @@ function openCamera() {
                             </div>
                         `;
                         console.log('最終プレビュー表示完了');
+
+                        // デバッグ情報を表示
+                        showDebugInfo('最終プレビュー表示完了', {
+                            previewElementExists: !!preview,
+                            dataUrlLength: dataUrl.length,
+                            dataUrlStart: dataUrl.substring(0, 50) + '...',
+                            liffDataImageDataUrl: !!window.liffData.imageDataUrl,
+                            localStorageSaved: !!localStorage.getItem('liffData')
+                        });
                     } else {
                         console.error('最終プレビュー表示時にphoto-preview要素が見つかりません');
+                        showDebugInfo('エラー: 最終プレビュー表示時にphoto-preview要素が見つかりません', {
+                            error: 'photo-preview要素が見つかりません'
+                        });
                     }
 
                     // 成功メッセージを表示（アラートではなく）
@@ -247,6 +324,14 @@ function openCamera() {
 
                 reader.onerror = function(e) {
                     console.error('FileReader エラー:', e);
+
+                    // デバッグ情報を表示
+                    showDebugInfo('FileReader エラー', {
+                        error: e.toString(),
+                        errorType: e.type,
+                        errorTarget: e.target ? e.target.readyState : 'unknown'
+                    });
+
                     const errorMsg = document.createElement('div');
                     errorMsg.style.cssText = `
                         position: fixed;
@@ -272,6 +357,13 @@ function openCamera() {
 
                 reader.onabort = function(e) {
                     console.error('FileReader 中断:', e);
+
+                    // デバッグ情報を表示
+                    showDebugInfo('FileReader 中断', {
+                        error: e.toString(),
+                        errorType: e.type
+                    });
+
                     const abortMsg = document.createElement('div');
                     abortMsg.style.cssText = `
                         position: fixed;
@@ -461,6 +553,13 @@ function getLocation() {
 function clearAllData() {
     console.log('データクリア開始');
 
+    // デバッグ情報を表示
+    showDebugInfo('データクリア開始', {
+        liffDataBeforeClear: window.liffData,
+        localStorageBeforeClear: localStorage.getItem('liffData') ? 'exists' : 'not exists',
+        sessionStorageBeforeClear: sessionStorage.getItem('liffData') ? 'exists' : 'not exists'
+    });
+
     // ストレージをクリア
     try {
         localStorage.removeItem('liffData');
@@ -468,6 +567,9 @@ function clearAllData() {
         console.log('ストレージをクリアしました');
     } catch (e) {
         console.error('ストレージクリアエラー:', e);
+        showDebugInfo('ストレージクリアエラー', {
+            error: e.toString()
+        });
     }
 
     // メモリ上のデータをクリア
