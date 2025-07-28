@@ -115,62 +115,108 @@ function openCamera() {
                     // データを保存
                     window.liffData.imageDataUrl = dataUrl;
 
-                    // sessionStorageとlocalStorageの両方に保存
-                    try {
-                        sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
-                        localStorage.setItem('liffData', JSON.stringify(window.liffData));
-                        console.log('データをsessionStorageとlocalStorageに保存しました');
-                    } catch (e) {
-                        console.error('ストレージ保存エラー:', e);
-                    }
+                    // 保存処理をPromiseでラップして確実に完了を待つ
+                    const saveDataPromise = new Promise((resolve, reject) => {
+                        try {
+                            // sessionStorageとlocalStorageの両方に保存
+                            sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
+                            localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                            console.log('データをsessionStorageとlocalStorageに保存しました');
 
-                    // 最終的なプレビューを表示
-                    const preview = document.getElementById('photo-preview');
-                    preview.style.background = 'white';
-                    preview.innerHTML = `
-                        <div style="margin: 10px 0;">
-                            <img src="${dataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
-                            <div style="margin-top: 10px; color: green; font-weight: bold;">
-                                ✓ 写真が撮影されました
-                            </div>
-                        </div>
-                    `;
-                    console.log('最終プレビュー表示完了');
-
-                    // 成功メッセージを表示（アラートではなく）
-                    const successMsg = document.createElement('div');
-                    successMsg.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: #28a745;
-                        color: white;
-                        padding: 10px 20px;
-                        border-radius: 5px;
-                        z-index: 1000;
-                        font-weight: bold;
-                    `;
-                    successMsg.textContent = '写真を撮影しました！';
-                    document.body.appendChild(successMsg);
-
-                    // 3秒後にメッセージを削除
-                    setTimeout(() => {
-                        if (successMsg.parentNode) {
-                            successMsg.parentNode.removeChild(successMsg);
+                            // 保存完了を確認
+                            setTimeout(() => {
+                                const savedData = localStorage.getItem('liffData');
+                                const sessionData = sessionStorage.getItem('liffData');
+                                if (savedData && sessionData) {
+                                    console.log('保存確認 - localStorage:', '保存済み');
+                                    console.log('保存確認 - sessionStorage:', '保存済み');
+                                    resolve();
+                                } else {
+                                    reject(new Error('データ保存の確認に失敗しました'));
+                                }
+                            }, 500); // 500ms待機して保存完了を確認
+                        } catch (e) {
+                            console.error('ストレージ保存エラー:', e);
+                            reject(e);
                         }
-                    }, 3000);
+                    });
 
-                    // フォームの状態を確認
-                    console.log('現在のliffData:', window.liffData);
+                    // 保存完了後にプレビュー表示とメッセージ表示
+                    saveDataPromise.then(() => {
+                        console.log('データ保存完了 - プレビュー表示開始');
 
-                    // データが正しく保存されているか確認
-                    setTimeout(() => {
-                        const savedData = localStorage.getItem('liffData');
-                        console.log('保存確認 - localStorage:', savedData ? '保存済み' : '未保存');
-                        const sessionData = sessionStorage.getItem('liffData');
-                        console.log('保存確認 - sessionStorage:', sessionData ? '保存済み' : '未保存');
-                    }, 1000);
+                        // 最終的なプレビューを表示
+                        const preview = document.getElementById('photo-preview');
+                        preview.style.background = 'white';
+                        preview.innerHTML = `
+                            <div style="margin: 10px 0;">
+                                <img src="${dataUrl}" class="img-fluid" style="max-width:300px; border: 2px solid #007bff;" />
+                                <div style="margin-top: 10px; color: green; font-weight: bold;">
+                                    ✓ 写真が撮影されました
+                                </div>
+                            </div>
+                        `;
+                        console.log('最終プレビュー表示完了');
+
+                        // 成功メッセージを表示
+                        const successMsg = document.createElement('div');
+                        successMsg.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: #28a745;
+                            color: white;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            z-index: 1000;
+                            font-weight: bold;
+                        `;
+                        successMsg.textContent = '写真を撮影しました！';
+                        document.body.appendChild(successMsg);
+
+                        // 3秒後にメッセージを削除
+                        setTimeout(() => {
+                            if (successMsg.parentNode) {
+                                successMsg.parentNode.removeChild(successMsg);
+                            }
+                        }, 3000);
+
+                        // フォームの状態を確認
+                        console.log('現在のliffData:', window.liffData);
+
+                        // 保存完了の最終確認
+                        setTimeout(() => {
+                            const finalSavedData = localStorage.getItem('liffData');
+                            console.log('最終保存確認 - localStorage:', finalSavedData ? '保存済み' : '未保存');
+                        }, 1000);
+
+                    }).catch((error) => {
+                        console.error('データ保存エラー:', error);
+
+                        // エラーメッセージを表示
+                        const errorMsg = document.createElement('div');
+                        errorMsg.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: #dc3545;
+                            color: white;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            z-index: 1000;
+                            font-weight: bold;
+                        `;
+                        errorMsg.textContent = 'データ保存エラー: ' + error.message;
+                        document.body.appendChild(errorMsg);
+
+                        setTimeout(() => {
+                            if (errorMsg.parentNode) {
+                                errorMsg.parentNode.removeChild(errorMsg);
+                            }
+                        }, 3000);
+                    });
                 };
 
                 reader.onerror = function(e) {
@@ -382,6 +428,21 @@ function initializeLiff(liffId) {
     } else {
         console.log('保存されたデータが見つかりません');
     }
+
+    // ページ遷移を防ぐためのイベントリスナー
+    window.addEventListener('beforeunload', function(e) {
+        console.log('ページ遷移検知 - データ保存状態を確認');
+
+        // データ保存中の場合、遷移を防ぐ
+        if (window.liffData && window.liffData.imageDataUrl) {
+            const savedData = localStorage.getItem('liffData');
+            if (!savedData) {
+                e.preventDefault();
+                e.returnValue = 'データ保存中です。ページを離れますか？';
+                console.log('データ保存中 - ページ遷移を防止');
+            }
+        }
+    });
 
     // LIFF SDKのバージョンを確認
     if (typeof liff !== 'undefined') {
