@@ -1,46 +1,77 @@
 // デバッグ情報表示関数
 function showDebugInfo(title, data) {
-    const debugDiv = document.getElementById('debug-info') || createDebugDiv();
+    try {
+        console.log('showDebugInfo called:', title, data);
 
-    const timestamp = new Date().toLocaleTimeString();
-    const debugInfo = `
-        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px;">
-            <strong style="color: #007bff;">[${timestamp}] ${title}</strong><br>
-            <pre style="margin: 5px 0; font-size: 12px; color: #6c757d;">${JSON.stringify(data, null, 2)}</pre>
-        </div>
-    `;
+        const debugDiv = document.getElementById('debug-info') || createDebugDiv();
 
-    debugDiv.innerHTML += debugInfo;
-    debugDiv.scrollTop = debugDiv.scrollHeight;
+        const timestamp = new Date().toLocaleTimeString();
+        const debugInfo = `
+            <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px;">
+                <strong style="color: #007bff;">[${timestamp}] ${title}</strong><br>
+                <pre style="margin: 5px 0; font-size: 12px; color: #6c757d;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+
+        debugDiv.innerHTML += debugInfo;
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+
+        console.log('Debug info displayed successfully');
+    } catch (error) {
+        console.error('showDebugInfo error:', error);
+        alert('デバッグ情報表示エラー: ' + error.message);
+    }
 }
 
 function createDebugDiv() {
-    const debugDiv = document.createElement('div');
-    debugDiv.id = 'debug-info';
-    debugDiv.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        width: 400px;
-        max-height: 300px;
-        background: white;
-        border: 2px solid #007bff;
-        border-radius: 5px;
-        padding: 10px;
-        overflow-y: auto;
-        z-index: 10000;
-        font-family: monospace;
-        font-size: 11px;
-    `;
-    debugDiv.innerHTML = '<div style="font-weight: bold; color: #007bff; margin-bottom: 10px;">デバッグ情報</div>';
-    document.body.appendChild(debugDiv);
-    return debugDiv;
+    try {
+        console.log('createDebugDiv called');
+
+        const debugDiv = document.createElement('div');
+        debugDiv.id = 'debug-info';
+        debugDiv.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 400px;
+            max-height: 300px;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            z-index: 10000;
+            font-family: monospace;
+            font-size: 11px;
+        `;
+        debugDiv.innerHTML = '<div style="font-weight: bold; color: #007bff; margin-bottom: 10px;">デバッグ情報</div>';
+        document.body.appendChild(debugDiv);
+
+        console.log('Debug div created successfully');
+        return debugDiv;
+    } catch (error) {
+        console.error('createDebugDiv error:', error);
+        alert('デバッグ情報エリア作成エラー: ' + error.message);
+        return null;
+    }
 }
 
 $(document).ready(function () {
     // liffId: LIFF URL "https://liff.line.me/xxx"のxxxに該当する箇所
     // LINE DevelopersのLIFF画面より確認可能
     var liffId = "2007732537-K8gaZLDe";
+
+    // 基本的なデバッグ情報を表示
+    showDebugInfo('ページ読み込み完了', {
+        documentReady: true,
+        timestamp: new Date().toISOString()
+    });
+
+    // テスト用のアラートも表示
+    setTimeout(() => {
+        alert('デバッグ機能テスト: ページ読み込み完了');
+    }, 1000);
+
     initializeLiff(liffId);
 });
 
@@ -770,6 +801,10 @@ function initializeLiff(liffId) {
             }
 
             $('#camera-btn').on('click', function() {
+                showDebugInfo('カメラボタンクリック', {
+                    buttonClicked: true,
+                    timestamp: new Date().toISOString()
+                });
                 openCamera();
             });
 
