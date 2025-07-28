@@ -618,6 +618,13 @@ function initializeLiff(liffId) {
         // }
     } else {
         console.log('保存されたデータが見つかりません');
+        // 初回アクセス時はliffDataを初期化
+        window.liffData = {
+            imageDataUrl: null,
+            location: null,
+            lineId: null
+        };
+        console.log('liffDataを初期化しました');
     }
 
     // LIFF SDKのバージョンを確認
