@@ -328,13 +328,32 @@ function openCamera() {
                             lineId: lineId
                         };
                         console.log('LINE IDと位置情報を保持しました');
+
+                        // デバッグ情報を表示
+                        showDebugInfo('既存データクリア', {
+                            currentDataSize: currentData.length,
+                            parsedDataKeys: Object.keys(parsedData),
+                            hasLineId: !!lineId,
+                            hasLocation: !!location,
+                            newLiffData: JSON.stringify(window.liffData)
+                        });
                     } else {
                         localStorage.removeItem('liffData');
                         sessionStorage.removeItem('liffData');
+
+                        // デバッグ情報を表示
+                        showDebugInfo('既存データなし', {
+                            currentDataExists: false,
+                            willInitialize: true
+                        });
                     }
                     console.log('画像データをクリアしました');
                 } catch (e) {
                     console.error('ストレージクリアエラー:', e);
+                    showDebugInfo('ストレージクリアエラー', {
+                        error: e.toString(),
+                        errorMessage: e.message
+                    });
                 }
 
                 // 即座にデータを保存（FileReader完了前）
@@ -408,6 +427,15 @@ function openCamera() {
                     window.liffData.imageDataUrl = dataUrl;
                     console.log('画像データを更新しました');
 
+                    // デバッグ情報を表示
+                    showDebugInfo('画像データ更新', {
+                        dataUrlLength: dataUrl.length,
+                        dataUrlStart: dataUrl.substring(0, 50) + '...',
+                        liffDataImageDataUrl: !!window.liffData.imageDataUrl,
+                        liffDataKeys: Object.keys(window.liffData),
+                        liffDataSize: JSON.stringify(window.liffData).length
+                    });
+
                     // sessionStorageとlocalStorageの両方に保存
                     try {
                         sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
@@ -427,8 +455,22 @@ function openCamera() {
                             liffDataBeforeSave: JSON.stringify(window.liffData),
                             localStorageAfterSave: localStorage.getItem('liffData'),
                             localStorageQuotaExceeded: localStorage.getItem('liffData') ? localStorage.getItem('liffData').length > 5000000 : false,
-                            estimatedQuota: '5MB typical limit'
+                            estimatedQuota: '5MB typical limit',
+                            localStorageKeys: Object.keys(localStorage),
+                            sessionStorageKeys: Object.keys(sessionStorage)
                         });
+
+                        // 保存後の確認
+                        setTimeout(() => {
+                            const savedData = localStorage.getItem('liffData');
+                            showDebugInfo('保存後確認', {
+                                localStorageExists: !!savedData,
+                                savedDataSize: savedData ? savedData.length : 0,
+                                savedDataParsed: savedData ? JSON.parse(savedData) : null,
+                                savedDataKeys: savedData ? Object.keys(JSON.parse(savedData)) : [],
+                                hasImageData: savedData ? JSON.parse(savedData).imageDataUrl : false
+                            });
+                        }, 500);
                     } catch (e) {
                         console.error('ストレージ保存エラー:', e);
                         showDebugInfo('ストレージ保存エラー', {
