@@ -372,6 +372,15 @@ function openCamera() {
             // スマホでの確認用にアラート表示
             if (file) {
                 alert('ファイル選択完了！\nファイル名: ' + file.name + '\nサイズ: ' + file.size + 'バイト\nタイプ: ' + file.type);
+
+                // ファイル選択後も2秒間待機
+                setTimeout(() => {
+                    console.log('ファイル選択後の待機完了');
+                    showDebugInfo('ファイル選択待機完了', {
+                        message: 'ファイル選択後の待機が完了しました',
+                        timestamp: new Date().toISOString()
+                    });
+                }, 2000);
             } else {
                 alert('ファイルが選択されませんでした');
             }
@@ -548,7 +557,7 @@ function openCamera() {
                         liffDataSize: JSON.stringify(window.liffData).length
                     });
 
-                                        // 即座にlocalStorageに保存（ページリロード対策）
+                                                            // 即座にlocalStorageに保存（ページリロード対策）
                     try {
                         localStorage.setItem('liffData', JSON.stringify(window.liffData));
                         console.log('画像データ更新後、即座にlocalStorageに保存しました');
@@ -561,6 +570,16 @@ function openCamera() {
                             hasImageData: !!window.liffData.imageDataUrl,
                             imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0
                         });
+
+                        // ページ遷移を防ぐため、3秒間待機
+                        setTimeout(() => {
+                            console.log('3秒間の待機完了');
+                            showDebugInfo('待機完了', {
+                                message: 'ページ遷移前の待機が完了しました',
+                                timestamp: new Date().toISOString()
+                            });
+                        }, 3000);
+
                     } catch (e) {
                         console.error('即座保存エラー:', e);
                         alert('保存エラー: ' + e.message);
@@ -1011,9 +1030,14 @@ function clearAllData() {
 function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
 
-    // ページリロード検知
-    window.addEventListener('beforeunload', function() {
+        // ページリロード検知
+    window.addEventListener('beforeunload', function(e) {
         console.log('ページリロード検知 - データを保存');
+
+        // ページ遷移を防ぐためのメッセージを表示
+        e.preventDefault();
+        e.returnValue = 'ページを離れますか？';
+
         if (window.liffData) {
             try {
                 localStorage.setItem('liffData', JSON.stringify(window.liffData));
