@@ -92,16 +92,30 @@ function createDebugDiv() {
             font-family: monospace;
             font-size: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: block;
         `;
 
         // ヘッダー部分に閉じるボタンを追加
         const headerHtml = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #007bff;">
                 <span>デバッグ情報</span>
-                <button id="close-debug" onclick="document.getElementById('debug-info').style.display='none';" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer; font-weight: bold;">×</button>
+                <button id="close-debug" onclick="document.getElementById('debug-info').style.display='none';" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 12px; cursor: pointer; font-weight: bold; min-width: 24px; min-height: 24px; display: inline-block; line-height: 1;">×</button>
             </div>
         `;
         debugDiv.innerHTML = headerHtml;
+
+        // デバッグ情報を表示
+        console.log('デバッグ情報エリアを作成しました');
+        console.log('ヘッダーHTML:', headerHtml);
+
+        // ボタンの存在を確認
+        setTimeout(() => {
+            const closeBtn = document.getElementById('close-debug');
+            console.log('閉じるボタンの存在確認:', !!closeBtn);
+            if (closeBtn) {
+                console.log('閉じるボタンのスタイル:', closeBtn.style.cssText);
+            }
+        }, 100);
 
         // 閉じるボタンのイベントリスナーを追加
         setTimeout(() => {
