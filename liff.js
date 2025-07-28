@@ -3,7 +3,15 @@ function showDebugInfo(title, data) {
     try {
         console.log('showDebugInfo called:', title, data);
 
-        const debugDiv = document.getElementById('debug-info') || createDebugDiv();
+        let debugDiv = document.getElementById('debug-info');
+        if (!debugDiv) {
+            debugDiv = createDebugDiv();
+        }
+
+        // デバッグ情報が非表示になっている場合は再表示
+        if (debugDiv.style.display === 'none') {
+            debugDiv.style.display = 'block';
+        }
 
         const timestamp = new Date().toLocaleTimeString();
 
@@ -47,6 +55,22 @@ function showDebugInfo(title, data) {
     }
 }
 
+// デバッグ情報の表示/非表示を切り替えるグローバル関数
+function toggleDebugInfo() {
+    const debugDiv = document.getElementById('debug-info');
+    if (debugDiv) {
+        if (debugDiv.style.display === 'none') {
+            debugDiv.style.display = 'block';
+            console.log('デバッグ情報を表示しました');
+        } else {
+            debugDiv.style.display = 'none';
+            console.log('デバッグ情報を非表示にしました');
+        }
+    } else {
+        console.log('デバッグ情報エリアが見つかりません');
+    }
+}
+
 function createDebugDiv() {
     try {
         console.log('createDebugDiv called');
@@ -74,7 +98,7 @@ function createDebugDiv() {
         const headerHtml = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #007bff;">
                 <span>デバッグ情報</span>
-                <button id="close-debug" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer;">×</button>
+                <button id="close-debug" onclick="document.getElementById('debug-info').style.display='none';" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer; font-weight: bold;">×</button>
             </div>
         `;
         debugDiv.innerHTML = headerHtml;
@@ -85,7 +109,11 @@ function createDebugDiv() {
             if (closeBtn) {
                 closeBtn.onclick = function() {
                     debugDiv.style.display = 'none';
+                    console.log('デバッグ情報を非表示にしました');
                 };
+                console.log('閉じるボタンのイベントリスナーを設定しました');
+            } else {
+                console.error('閉じるボタンが見つかりません');
             }
         }, 100);
 
