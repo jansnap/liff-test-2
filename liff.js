@@ -423,7 +423,11 @@ function openCamera() {
                             liffDataImageDataUrl: !!window.liffData.imageDataUrl,
                             imageDataUrlLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
                             totalDataSize: JSON.stringify(window.liffData).length,
-                            imageDataPercentage: window.liffData.imageDataUrl ? Math.round((window.liffData.imageDataUrl.length / JSON.stringify(window.liffData).length) * 100) : 0
+                            imageDataPercentage: window.liffData.imageDataUrl ? Math.round((window.liffData.imageDataUrl.length / JSON.stringify(window.liffData).length) * 100) : 0,
+                            liffDataBeforeSave: JSON.stringify(window.liffData),
+                            localStorageAfterSave: localStorage.getItem('liffData'),
+                            localStorageQuotaExceeded: localStorage.getItem('liffData') ? localStorage.getItem('liffData').length > 5000000 : false,
+                            estimatedQuota: '5MB typical limit'
                         });
                     } catch (e) {
                         console.error('ストレージ保存エラー:', e);
@@ -880,7 +884,9 @@ function initializeLiff(liffId) {
                 hasImageData: savedData && savedData.imageDataUrl ? true : false,
                 imageDataLength: savedData && savedData.imageDataUrl ? savedData.imageDataUrl.length : 0,
                 imageDataStart: savedData && savedData.imageDataUrl ? savedData.imageDataUrl.substring(0, 50) + '...' : 'なし',
-                savedDataString: JSON.stringify(savedData).substring(0, 200) + '...'
+                savedDataString: JSON.stringify(savedData).substring(0, 200) + '...',
+                savedDataFull: JSON.stringify(savedData),
+                localStorageRaw: localStorage.getItem('liffData')
             });
         } catch (e) {
             console.error('localStorage復元エラー:', e);
