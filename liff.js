@@ -123,6 +123,14 @@ $(document).ready(function () {
 function openCamera() {
     console.log('openCamera called');
 
+    // 関数開始時のデバッグ情報
+    showDebugInfo('openCamera関数開始', {
+        functionCalled: true,
+        timestamp: new Date().toISOString(),
+        liffAvailable: typeof liff !== 'undefined',
+        isInClient: typeof liff !== 'undefined' ? liff.isInClient() : 'liff not available'
+    });
+
     // LIFFが初期化されているか確認
     if (typeof liff === 'undefined') {
         alert('LIFF SDKが読み込まれていません');
@@ -173,7 +181,9 @@ function openCamera() {
         liffDataExists: !!window.liffData,
         liffDataContent: window.liffData,
         isInClient: liff.isInClient(),
-        isLoggedIn: liff.isLoggedIn()
+        isLoggedIn: liff.isLoggedIn(),
+        photoPreviewElement: !!document.getElementById('photo-preview'),
+        allElements: Array.from(document.querySelectorAll('*')).map(el => el.id).filter(id => id).join(', ')
     });
 
     // カメラAPIが利用可能か確認
@@ -225,7 +235,8 @@ function openCamera() {
                 fileExists: !!file,
                 fileName: file ? file.name : 'なし',
                 fileSize: file ? file.size : 0,
-                fileType: file ? file.type : 'なし'
+                fileType: file ? file.type : 'なし',
+                fileValid: file && file.size > 0 && file.type.startsWith('image/')
             });
 
             if (file) {
@@ -276,7 +287,7 @@ function openCamera() {
                 const tempDataUrl = URL.createObjectURL(file);
                 console.log('一時的なdataUrl作成:', tempDataUrl);
 
-                // 即座にプレビューを表示
+                                // 即座にプレビューを表示
                 const preview = document.getElementById('photo-preview');
                 if (preview) {
                     preview.style.background = 'white';
@@ -294,12 +305,24 @@ function openCamera() {
                     showDebugInfo('即座プレビュー表示完了', {
                         previewElementExists: !!preview,
                         tempDataUrl: tempDataUrl.substring(0, 50) + '...',
-                        previewInnerHTML: preview.innerHTML.substring(0, 100) + '...'
+                        previewInnerHTML: preview.innerHTML.substring(0, 100) + '...',
+                        previewStyle: preview.style.cssText
                     });
+
+                    // プレビューが実際に表示されているか確認
+                    setTimeout(() => {
+                        const imgElement = preview.querySelector('img');
+                        showDebugInfo('プレビュー確認', {
+                            imgElementExists: !!imgElement,
+                            imgSrc: imgElement ? imgElement.src.substring(0, 50) + '...' : 'なし',
+                            previewVisible: preview.offsetWidth > 0 && preview.offsetHeight > 0
+                        });
+                    }, 500);
                 } else {
                     console.error('photo-preview要素が見つかりません');
                     showDebugInfo('エラー: photo-preview要素が見つかりません', {
-                        error: 'photo-preview要素が見つかりません'
+                        error: 'photo-preview要素が見つかりません',
+                        documentBody: document.body.innerHTML.substring(0, 200) + '...'
                     });
                 }
 
@@ -308,6 +331,14 @@ function openCamera() {
                     console.log('FileReader onload 実行');
                     const dataUrl = e.target.result;
                     console.log('dataUrl 生成完了, 長さ:', dataUrl.length);
+
+                    // デバッグ情報を表示
+                    showDebugInfo('FileReader onload 実行', {
+                        dataUrlLength: dataUrl.length,
+                        dataUrlStart: dataUrl.substring(0, 50) + '...',
+                        dataUrlValid: dataUrl.startsWith('data:image/'),
+                        readyState: e.target.readyState
+                    });
 
                     // liffDataが存在しない場合は初期化
                     if (!window.liffData) {
@@ -352,8 +383,23 @@ function openCamera() {
                             dataUrlLength: dataUrl.length,
                             dataUrlStart: dataUrl.substring(0, 50) + '...',
                             liffDataImageDataUrl: !!window.liffData.imageDataUrl,
-                            localStorageSaved: !!localStorage.getItem('liffData')
+                            localStorageSaved: !!localStorage.getItem('liffData'),
+                            previewInnerHTML: preview.innerHTML.substring(0, 200) + '...',
+                            previewStyle: preview.style.cssText
                         });
+
+                        // 画像要素の確認
+                        setTimeout(() => {
+                            const imgElement = preview.querySelector('img');
+                            showDebugInfo('最終プレビュー確認', {
+                                imgElementExists: !!imgElement,
+                                imgSrc: imgElement ? imgElement.src.substring(0, 50) + '...' : 'なし',
+                                imgWidth: imgElement ? imgElement.offsetWidth : 0,
+                                imgHeight: imgElement ? imgElement.offsetHeight : 0,
+                                previewWidth: preview.offsetWidth,
+                                previewHeight: preview.offsetHeight
+                            });
+                        }, 1000);
                     } else {
                         console.error('最終プレビュー表示時にphoto-preview要素が見つかりません');
                         showDebugInfo('エラー: 最終プレビュー表示時にphoto-preview要素が見つかりません', {
@@ -829,11 +875,23 @@ function initializeLiff(liffId) {
         .then(() => {
             console.log('LIFF初期化成功');
 
+            // デバッグ情報を表示
+            showDebugInfo('LIFF初期化成功', {
+                liffInitialized: true,
+                timestamp: new Date().toISOString()
+            });
+
             // LIFFの準備が完了するまで待つ
             return liff.ready;
         })
         .then(() => {
             console.log('LIFF準備完了');
+
+            // デバッグ情報を表示
+            showDebugInfo('LIFF準備完了', {
+                liffReady: true,
+                timestamp: new Date().toISOString()
+            });
 
             // LIFF初期化後にボタンイベントを登録
             if (!window.liffData) {
@@ -847,9 +905,18 @@ function initializeLiff(liffId) {
             $('#camera-btn').on('click', function() {
                 showDebugInfo('カメラボタンクリック', {
                     buttonClicked: true,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    buttonElement: !!document.getElementById('camera-btn'),
+                    jqueryLoaded: typeof $ !== 'undefined'
                 });
                 openCamera();
+            });
+
+            // ボタンが正しく設定されているか確認
+            showDebugInfo('カメラボタン設定完了', {
+                buttonExists: !!document.getElementById('camera-btn'),
+                jqueryLoaded: typeof $ !== 'undefined',
+                eventHandlers: $._data ? $._data(document.getElementById('camera-btn'), 'events') : 'unavailable'
             });
 
             $('#location-btn').on('click', function() {
