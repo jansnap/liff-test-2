@@ -367,95 +367,95 @@ function getLocation() {
 }
 
 // LINE ID取得
-function getLineId() {
-    console.log('LINE ID取得開始');
+// function getLineId() {
+//     console.log('LINE ID取得開始');
 
-    if (!liff.isLoggedIn()) {
-        console.log('LINEにログインしていません');
-        return;
-    }
+//     if (!liff.isLoggedIn()) {
+//         console.log('LINEにログインしていません');
+//         return;
+//     }
 
-    console.log('liff.isLoggedIn():', liff.isLoggedIn());
-    console.log('liff.isInClient():', liff.isInClient());
+//     console.log('liff.isLoggedIn():', liff.isLoggedIn());
+//     console.log('liff.isInClient():', liff.isInClient());
 
-    // プロフィール情報を取得
-    liff.getProfile()
-        .then(profile => {
-            console.log('プロフィール情報:', profile);
+//     // プロフィール情報を取得
+//     liff.getProfile()
+//         .then(profile => {
+//             console.log('プロフィール情報:', profile);
 
-            // LINE IDを保存
-            window.liffData.lineId = profile.userId;
-            console.log('LINE ID:', profile.userId);
+//             // LINE IDを保存
+//             window.liffData.lineId = profile.userId;
+//             console.log('LINE ID:', profile.userId);
 
-            // sessionStorageとlocalStorageの両方に保存
-            try {
-                sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
-                localStorage.setItem('liffData', JSON.stringify(window.liffData));
-                console.log('LINE IDをストレージに保存しました');
-            } catch (e) {
-                console.error('ストレージ保存エラー:', e);
-            }
+//             // sessionStorageとlocalStorageの両方に保存
+//             try {
+//                 sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
+//                 localStorage.setItem('liffData', JSON.stringify(window.liffData));
+//                 console.log('LINE IDをストレージに保存しました');
+//             } catch (e) {
+//                 console.error('ストレージ保存エラー:', e);
+//             }
 
-            // プレビューを表示
-            const lineIdPreview = document.getElementById('line-id-preview');
-            if (lineIdPreview) {
-                lineIdPreview.innerHTML = `LINE ID: ${profile.userId}`;
-                console.log('LINE IDプレビューを表示しました');
-            } else {
-                console.error('line-id-preview要素が見つかりません');
-            }
+//             // プレビューを表示
+//             const lineIdPreview = document.getElementById('line-id-preview');
+//             if (lineIdPreview) {
+//                 lineIdPreview.innerHTML = `LINE ID: ${profile.userId}`;
+//                 console.log('LINE IDプレビューを表示しました');
+//             } else {
+//                 console.error('line-id-preview要素が見つかりません');
+//             }
 
-            // 成功メッセージを表示
-            const successMsg = document.createElement('div');
-            successMsg.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #28a745;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                z-index: 1000;
-                font-weight: bold;
-            `;
-            successMsg.textContent = 'LINE IDを取得しました！';
-            document.body.appendChild(successMsg);
+//             // 成功メッセージを表示
+//             const successMsg = document.createElement('div');
+//             successMsg.style.cssText = `
+//                 position: fixed;
+//                 top: 20px;
+//                 left: 50%;
+//                 transform: translateX(-50%);
+//                 background: #28a745;
+//                 color: white;
+//                 padding: 10px 20px;
+//                 border-radius: 5px;
+//                 z-index: 1000;
+//                 font-weight: bold;
+//             `;
+//             successMsg.textContent = 'LINE IDを取得しました！';
+//             document.body.appendChild(successMsg);
 
-            setTimeout(() => {
-                if (successMsg.parentNode) {
-                    successMsg.parentNode.removeChild(successMsg);
-                }
-            }, 3000);
-        })
-        .catch(err => {
-            console.error('LINE ID取得エラー:', err);
-            console.error('エラー詳細:', err.message);
+//             setTimeout(() => {
+//                 if (successMsg.parentNode) {
+//                     successMsg.parentNode.removeChild(successMsg);
+//                 }
+//             }, 3000);
+//         })
+//         .catch(err => {
+//             console.error('LINE ID取得エラー:', err);
+//             console.error('エラー詳細:', err.message);
 
-            // エラーメッセージを表示
-            const errorMsg = document.createElement('div');
-            errorMsg.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #dc3545;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                z-index: 1000;
-                font-weight: bold;
-            `;
-            errorMsg.textContent = 'LINE ID取得に失敗しました: ' + err.message;
-            document.body.appendChild(errorMsg);
+//             // エラーメッセージを表示
+//             const errorMsg = document.createElement('div');
+//             errorMsg.style.cssText = `
+//                 position: fixed;
+//                 top: 20px;
+//                 left: 50%;
+//                 transform: translateX(-50%);
+//                 background: #dc3545;
+//                 color: white;
+//                 padding: 10px 20px;
+//                 border-radius: 5px;
+//                 z-index: 1000;
+//                 font-weight: bold;
+//             `;
+//             errorMsg.textContent = 'LINE ID取得に失敗しました: ' + err.message;
+//             document.body.appendChild(errorMsg);
 
-            setTimeout(() => {
-                if (errorMsg.parentNode) {
-                    errorMsg.parentNode.removeChild(errorMsg);
-                }
-            }, 5000);
-        });
-}
+//             setTimeout(() => {
+//                 if (errorMsg.parentNode) {
+//                 errorMsg.parentNode.removeChild(errorMsg);
+//                 }
+//             }, 5000);
+//         });
+// }
 
 // データクリア
 function clearAllData() {
@@ -609,13 +609,13 @@ function initializeLiff(liffId) {
             console.log('位置情報プレビューを復元しました');
         }
 
-        if (window.liffData.lineId) {
-            const lineIdPreview = document.getElementById('line-id-preview');
-            if (lineIdPreview) {
-                lineIdPreview.innerHTML = `LINE ID: ${window.liffData.lineId}`;
-                console.log('LINE IDプレビューを復元しました');
-            }
-        }
+        // if (window.liffData.lineId) {
+        //     const lineIdPreview = document.getElementById('line-id-preview');
+        //     if (lineIdPreview) {
+        //         lineIdPreview.innerHTML = `LINE ID: ${window.liffData.lineId}`;
+        //         console.log('LINE IDプレビューを復元しました');
+        //     }
+        // }
     } else {
         console.log('保存されたデータが見つかりません');
     }
