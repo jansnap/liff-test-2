@@ -105,10 +105,22 @@ $(document).ready(function () {
     // LINE DevelopersのLIFF画面より確認可能
     var liffId = "2007732537-K8gaZLDe";
 
-    // 基本的なデバッグ情報を表示
+        // 基本的なデバッグ情報を表示
     showDebugInfo('ページ読み込み完了', {
         documentReady: true,
         timestamp: new Date().toISOString()
+    });
+
+    // localStorageの状況を詳細に確認
+    showDebugInfo('localStorage状況確認', {
+        localStorageKeys: Object.keys(localStorage),
+        liffDataExists: !!localStorage.getItem('liffData'),
+        liffDataSize: localStorage.getItem('liffData') ? localStorage.getItem('liffData').length : 0,
+        totalLocalStorageSize: JSON.stringify(localStorage).length,
+        sessionStorageKeys: Object.keys(sessionStorage),
+        sessionStorageSize: JSON.stringify(sessionStorage).length,
+        localStorageQuota: navigator.storage ? 'available' : 'not available',
+        estimatedQuota: '5-10MB typical'
     });
 
     // テスト用のアラートも表示
@@ -367,7 +379,9 @@ function openCamera() {
                             sessionStorageSize: sessionStorage.getItem('liffData') ? sessionStorage.getItem('liffData').length : 0,
                             localStorageSize: localStorage.getItem('liffData') ? localStorage.getItem('liffData').length : 0,
                             liffDataImageDataUrl: !!window.liffData.imageDataUrl,
-                            imageDataUrlLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0
+                            imageDataUrlLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
+                            totalDataSize: JSON.stringify(window.liffData).length,
+                            imageDataPercentage: window.liffData.imageDataUrl ? Math.round((window.liffData.imageDataUrl.length / JSON.stringify(window.liffData).length) * 100) : 0
                         });
                     } catch (e) {
                         console.error('ストレージ保存エラー:', e);
@@ -779,6 +793,16 @@ function initializeLiff(liffId) {
     // ページの状態を復元（sessionStorageとlocalStorageの両方から）
     let savedData = null;
 
+    // データ復元開始時のlocalStorage状況を確認
+    showDebugInfo('データ復元開始', {
+        localStorageKeys: Object.keys(localStorage),
+        sessionStorageKeys: Object.keys(sessionStorage),
+        liffDataInLocalStorage: !!localStorage.getItem('liffData'),
+        liffDataInSessionStorage: !!sessionStorage.getItem('liffData'),
+        localStorageLiffDataSize: localStorage.getItem('liffData') ? localStorage.getItem('liffData').length : 0,
+        sessionStorageLiffDataSize: sessionStorage.getItem('liffData') ? sessionStorage.getItem('liffData').length : 0
+    });
+
     // まずsessionStorageから復元を試行
     if (sessionStorage.getItem('liffData')) {
         try {
@@ -812,7 +836,9 @@ function initializeLiff(liffId) {
                 localStorageExists: true,
                 savedDataKeys: savedData ? Object.keys(savedData) : [],
                 hasImageData: savedData && savedData.imageDataUrl ? true : false,
-                imageDataLength: savedData && savedData.imageDataUrl ? savedData.imageDataUrl.length : 0
+                imageDataLength: savedData && savedData.imageDataUrl ? savedData.imageDataUrl.length : 0,
+                imageDataStart: savedData && savedData.imageDataUrl ? savedData.imageDataUrl.substring(0, 50) + '...' : 'なし',
+                savedDataString: JSON.stringify(savedData).substring(0, 200) + '...'
             });
         } catch (e) {
             console.error('localStorage復元エラー:', e);
