@@ -72,10 +72,10 @@ $(function () {
             alert('位置情報を取得してください');
             return false;
         }
-        if (!lineId) {
-            alert('LINE IDを取得してください');
-            return false;
-        }
+        // if (!lineId) {
+        //     alert('LINE IDを取得してください');
+        //     return false;
+        // }
 
         // サーバ送信
         $.ajax({
@@ -86,7 +86,7 @@ $(function () {
                 image: imageDataUrl,
                 latitude: location.latitude,
                 longitude: location.longitude,
-                lineId: lineId,
+                // lineId: lineId,
                 comment: comment
             }),
             success: function (res) {

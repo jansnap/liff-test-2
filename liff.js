@@ -674,11 +674,11 @@ function initializeLiff(liffId) {
             });
 
             // LINE IDを取得（一度だけ）
-            if (!window.liffData.lineId) {
-                getLineId();
-            } else {
-                console.log('LINE IDは既に取得済みです:', window.liffData.lineId);
-            }
+            // if (!window.liffData.lineId) {
+            //     getLineId();
+            // } else {
+            //     console.log('LINE IDは既に取得済みです:', window.liffData.lineId);
+            // }
 
             // LINEアプリ内でない場合の処理
             if (!liff.isInClient()) {
