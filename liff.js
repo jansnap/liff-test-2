@@ -6,14 +6,38 @@ function showDebugInfo(title, data) {
         const debugDiv = document.getElementById('debug-info') || createDebugDiv();
 
         const timestamp = new Date().toLocaleTimeString();
+
+        // データを簡潔に表示
+        let dataSummary = '';
+        if (typeof data === 'object') {
+            const keys = Object.keys(data);
+            dataSummary = keys.map(key => `${key}: ${data[key]}`).join(', ');
+        } else {
+            dataSummary = String(data);
+        }
+
         const debugInfo = `
-            <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px;">
+            <div style="margin: 5px 0; padding: 5px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px; font-size: 9px;">
                 <strong style="color: #007bff;">[${timestamp}] ${title}</strong><br>
-                <pre style="margin: 5px 0; font-size: 12px; color: #6c757d;">${JSON.stringify(data, null, 2)}</pre>
+                <span style="color: #6c757d; word-break: break-all;">${dataSummary}</span>
             </div>
         `;
 
-        debugDiv.innerHTML += debugInfo;
+        // 最新の5件のみを表示
+        const existingContent = debugDiv.innerHTML;
+        const headerMatch = existingContent.match(/<div[^>]*>デバッグ情報.*?<\/div>/);
+        const header = headerMatch ? headerMatch[0] : '';
+
+        // 既存のデバッグ情報を取得（ヘッダーを除く）
+        const existingDebugItems = existingContent.replace(header, '').split('<div style="margin: 5px 0; padding: 5px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px; font-size: 9px;">');
+
+        // 最新の4件 + 新しい1件 = 合計5件
+        const maxItems = 4;
+        const recentItems = existingDebugItems.slice(-maxItems).map(item =>
+            '<div style="margin: 5px 0; padding: 5px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px; font-size: 9px;">' + item
+        ).join('');
+
+        debugDiv.innerHTML = header + recentItems + debugInfo;
         debugDiv.scrollTop = debugDiv.scrollHeight;
 
         console.log('Debug info displayed successfully');
@@ -33,8 +57,8 @@ function createDebugDiv() {
             position: fixed;
             top: 10px;
             right: 10px;
-            width: 400px;
-            max-height: 300px;
+            width: 300px;
+            max-height: 200px;
             background: white;
             border: 2px solid #007bff;
             border-radius: 5px;
@@ -42,9 +66,29 @@ function createDebugDiv() {
             overflow-y: auto;
             z-index: 10000;
             font-family: monospace;
-            font-size: 11px;
+            font-size: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         `;
-        debugDiv.innerHTML = '<div style="font-weight: bold; color: #007bff; margin-bottom: 10px;">デバッグ情報</div>';
+
+        // ヘッダー部分に閉じるボタンを追加
+        const headerHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #007bff;">
+                <span>デバッグ情報</span>
+                <button id="close-debug" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer;">×</button>
+            </div>
+        `;
+        debugDiv.innerHTML = headerHtml;
+
+        // 閉じるボタンのイベントリスナーを追加
+        setTimeout(() => {
+            const closeBtn = document.getElementById('close-debug');
+            if (closeBtn) {
+                closeBtn.onclick = function() {
+                    debugDiv.style.display = 'none';
+                };
+            }
+        }, 100);
+
         document.body.appendChild(debugDiv);
 
         console.log('Debug div created successfully');
