@@ -68,7 +68,16 @@ function openCamera() {
 
     var preview = document.getElementById('photo-preview');
     preview.style.background = 'yellow';
-    preview.innerHTML = 'カメラAPIの代替手段を使用します';
+    preview.innerHTML = `
+        <div style="margin: 10px 0; text-align: center;">
+            <div style="color: #007bff; font-weight: bold; margin-bottom: 10px;">
+                📷 カメラ撮影を開始します
+            </div>
+            <div style="color: #6c757d; font-size: 14px;">
+                下部に表示される選択肢から「カメラ」を選択してください
+            </div>
+        </div>
+    `;
 
     if (!available) {
         alert('カメラAPIが利用できません。LINEアプリ内でアクセスしてください。');
@@ -99,13 +108,27 @@ function openCamera() {
         const timeoutId = setTimeout(() => {
             console.log('ファイル選択タイムアウト');
             alert('ファイル選択がタイムアウトしました。再度お試しください。');
-        }, 30000); // 30秒タイムアウト
+        }, 10000); // 10秒タイムアウト（デバッグ用）
 
         fileInput.onchange = function(e) {
             clearTimeout(timeoutId); // タイムアウトをクリア
             console.log('ファイル選択イベント発生');
             const file = e.target.files[0];
             console.log('選択されたファイル:', file);
+
+            // プレビューを更新して処理開始を表示
+            const preview = document.getElementById('photo-preview');
+            preview.style.background = 'lightblue';
+            preview.innerHTML = `
+                <div style="margin: 10px 0; text-align: center;">
+                    <div style="color: #007bff; font-weight: bold; margin-bottom: 10px;">
+                        🔄 画像を処理中...
+                    </div>
+                    <div style="color: #6c757d; font-size: 14px;">
+                        ファイルサイズ: ${file ? file.size : 0} バイト
+                    </div>
+                </div>
+            `;
 
             if (file) {
                 console.log('ファイルサイズ:', file.size);
@@ -127,6 +150,22 @@ function openCamera() {
                     </div>
                 `;
                 console.log('即座にプレビュー表示完了');
+            } else {
+                console.log('ファイルが選択されませんでした');
+                const preview = document.getElementById('photo-preview');
+                preview.style.background = 'lightcoral';
+                preview.innerHTML = `
+                    <div style="margin: 10px 0; text-align: center;">
+                        <div style="color: #dc3545; font-weight: bold; margin-bottom: 10px;">
+                            ❌ ファイルが選択されませんでした
+                        </div>
+                        <div style="color: #6c757d; font-size: 14px;">
+                            再度カメラボタンを押して撮影してください
+                        </div>
+                    </div>
+                `;
+                return;
+            }
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -293,30 +332,7 @@ function openCamera() {
 
                 console.log('FileReader readAsDataURL 開始');
                 reader.readAsDataURL(file);
-            } else {
-                console.log('ファイルが選択されていません');
-                const noFileMsg = document.createElement('div');
-                noFileMsg.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: #6c757d;
-                    color: white;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    z-index: 1000;
-                    font-weight: bold;
-                `;
-                noFileMsg.textContent = 'ファイルが選択されていません';
-                document.body.appendChild(noFileMsg);
 
-                setTimeout(() => {
-                    if (noFileMsg.parentNode) {
-                        noFileMsg.parentNode.removeChild(noFileMsg);
-                    }
-                }, 3000);
-            }
         };
 
         fileInput.onerror = function(e) {
@@ -366,14 +382,50 @@ function initializeLiff(liffId) {
     console.log('LIFF初期化開始');
 
     // ページリロード検知
-    window.addEventListener('beforeunload', function() {
+    window.addEventListener('beforeunload', function(e) {
         console.log('ページリロード検知 - データを保存');
+
+        // データ保存中の場合、遷移を防ぐ
+        if (window.liffData && window.liffData.imageDataUrl) {
+            const savedData = localStorage.getItem('liffData');
+            if (!savedData) {
+                e.preventDefault();
+                e.returnValue = 'データ保存中です。ページを離れますか？';
+                console.log('データ保存中 - ページ遷移を防止');
+            }
+        }
+
+        // 常にデータを保存
         if (window.liffData) {
             try {
                 localStorage.setItem('liffData', JSON.stringify(window.liffData));
                 console.log('localStorageにデータを保存しました');
             } catch (e) {
                 console.error('localStorage保存エラー:', e);
+            }
+        }
+    });
+
+    // ページ離脱検知（より確実）
+    window.addEventListener('pagehide', function(e) {
+        console.log('ページ離脱検知 - データを保存');
+
+        // データ保存中の場合、遷移を防ぐ
+        if (window.liffData && window.liffData.imageDataUrl) {
+            const savedData = localStorage.getItem('liffData');
+            if (!savedData) {
+                e.preventDefault();
+                console.log('データ保存中 - ページ離脱を防止');
+            }
+        }
+
+        // 常にデータを保存
+        if (window.liffData) {
+            try {
+                localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                console.log('localStorageにデータを保存しました（pagehide）');
+            } catch (e) {
+                console.error('localStorage保存エラー（pagehide）:', e);
             }
         }
     });
@@ -496,6 +548,18 @@ function initializeLiff(liffId) {
         })
         .then(() => {
             console.log('LIFF準備完了');
+
+            // LIFFアプリ内でのページ遷移防止
+            if (liff.isInClient()) {
+                console.log('LIFFアプリ内で実行中 - ページ遷移防止を有効化');
+
+                // ブラウザの戻るボタンを無効化
+                window.history.pushState(null, null, window.location.href);
+                window.addEventListener('popstate', function() {
+                    window.history.pushState(null, null, window.location.href);
+                    console.log('戻るボタンが押されましたが、ページ遷移を防止しました');
+                });
+            }
 
             // LIFF初期化後にボタンイベントを登録
             if (!window.liffData) {
