@@ -173,32 +173,64 @@ function openCamera() {
                     const dataUrl = e.target.result;
                     console.log('dataUrl 生成完了, 長さ:', dataUrl.length);
 
+                    // window.liffDataが存在しない場合は初期化
+                    if (!window.liffData) {
+                        window.liffData = {
+                            imageDataUrl: null,
+                            location: null
+                        };
+                        console.log('window.liffDataを初期化しました');
+                    }
+
                     // データを保存
                     window.liffData.imageDataUrl = dataUrl;
+                    console.log('window.liffDataに画像データを設定:', window.liffData);
 
                     // 保存処理をPromiseでラップして確実に完了を待つ
                     const saveDataPromise = new Promise((resolve, reject) => {
                         try {
+                            console.log('保存開始 - window.liffData:', window.liffData);
+
+                            // データのJSON文字列化を確認
+                            const dataToSave = JSON.stringify(window.liffData);
+                            console.log('保存するデータ（JSON）:', dataToSave.substring(0, 100) + '...');
+
                             // sessionStorageとlocalStorageの両方に保存
-                            sessionStorage.setItem('liffData', JSON.stringify(window.liffData));
-                            localStorage.setItem('liffData', JSON.stringify(window.liffData));
+                            sessionStorage.setItem('liffData', dataToSave);
+                            localStorage.setItem('liffData', dataToSave);
                             console.log('データをsessionStorageとlocalStorageに保存しました');
+
+                            // 即座に保存確認
+                            const savedData = localStorage.getItem('liffData');
+                            const sessionData = sessionStorage.getItem('liffData');
+                            console.log('即座の保存確認 - localStorage:', savedData ? '保存済み' : '未保存');
+                            console.log('即座の保存確認 - sessionStorage:', sessionData ? '保存済み' : '未保存');
 
                             // 保存完了を確認
                             setTimeout(() => {
-                                const savedData = localStorage.getItem('liffData');
-                                const sessionData = sessionStorage.getItem('liffData');
-                                if (savedData && sessionData) {
-                                    console.log('保存確認 - localStorage:', '保存済み');
-                                    console.log('保存確認 - sessionStorage:', '保存済み');
+                                const finalSavedData = localStorage.getItem('liffData');
+                                const finalSessionData = sessionStorage.getItem('liffData');
+                                if (finalSavedData && finalSessionData) {
+                                    console.log('最終保存確認 - localStorage:', '保存済み');
+                                    console.log('最終保存確認 - sessionStorage:', '保存済み');
+                                    console.log('保存されたデータサイズ:', finalSavedData.length);
                                     resolve();
                                 } else {
+                                    console.error('保存確認失敗 - localStorage:', finalSavedData ? 'あり' : 'なし');
+                                    console.error('保存確認失敗 - sessionStorage:', finalSessionData ? 'あり' : 'なし');
                                     reject(new Error('データ保存の確認に失敗しました'));
                                 }
                             }, 500); // 500ms待機して保存完了を確認
                         } catch (e) {
                             console.error('ストレージ保存エラー:', e);
-                            reject(e);
+
+                            // localStorageの容量制限をチェック
+                            if (e.name === 'QuotaExceededError') {
+                                console.error('localStorageの容量制限に達しました');
+                                reject(new Error('localStorageの容量制限に達しました。画像サイズを小さくしてください。'));
+                            } else {
+                                reject(e);
+                            }
                         }
                     });
 
@@ -250,6 +282,20 @@ function openCamera() {
                         setTimeout(() => {
                             const finalSavedData = localStorage.getItem('liffData');
                             console.log('最終保存確認 - localStorage:', finalSavedData ? '保存済み' : '未保存');
+
+                            // デバッグ用：localStorageの内容を確認
+                            if (finalSavedData) {
+                                try {
+                                    const parsedData = JSON.parse(finalSavedData);
+                                    console.log('localStorageに保存されたデータ:', {
+                                        hasImageData: !!parsedData.imageDataUrl,
+                                        imageDataLength: parsedData.imageDataUrl ? parsedData.imageDataUrl.length : 0,
+                                        hasLocation: !!parsedData.location
+                                    });
+                                } catch (e) {
+                                    console.error('localStorageデータの解析エラー:', e);
+                                }
+                            }
                         }, 1000);
 
                     }).catch((error) => {
@@ -721,7 +767,40 @@ function showConsoleLog() {
     }
 }
 
+// localStorageの状態を確認する関数
+function checkLocalStorage() {
+    console.log('=== localStorage状態確認 ===');
+
+    try {
+        const savedData = localStorage.getItem('liffData');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            console.log('localStorageに保存されたデータ:', {
+                hasImageData: !!parsedData.imageDataUrl,
+                imageDataLength: parsedData.imageDataUrl ? parsedData.imageDataUrl.length : 0,
+                hasLocation: !!parsedData.location,
+                locationData: parsedData.location
+            });
+        } else {
+            console.log('localStorageにデータがありません');
+        }
+
+        // localStorageの使用量を確認
+        let totalSize = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                totalSize += localStorage[key].length;
+            }
+        }
+        console.log('localStorage総使用量:', totalSize, '文字');
+
+    } catch (e) {
+        console.error('localStorage確認エラー:', e);
+    }
+}
+
 // グローバル関数として公開
 window.downloadConsoleLog = downloadConsoleLog;
 window.showConsoleLog = showConsoleLog;
+window.checkLocalStorage = checkLocalStorage;
 
