@@ -882,10 +882,31 @@ function debugToSyslog(data, title = 'DEBUG') {
     }
 }
 
+// LINEアプリ内でのデバッグ用関数
+function debugInLINE() {
+    alert('=== LINEアプリ内デバッグ開始 ===');
+
+    // 基本情報
+    alert(`LIFF SDK: ${typeof liff !== 'undefined' ? '読み込み済み' : '未読み込み'}`);
+    alert(`window.liffData: ${window.liffData ? '存在' : '未定義'}`);
+
+    // localStorage確認
+    const data = localStorage.getItem('liffData');
+    alert(`localStorage liffData: ${data ? '存在' : 'なし'}`);
+
+    // カメラ機能テスト
+    if (typeof openCamera === 'function') {
+        alert('openCamera関数: 利用可能');
+    } else {
+        alert('openCamera関数: 未定義');
+    }
+}
+
 // グローバル関数として公開
 window.downloadConsoleLog = downloadConsoleLog;
 window.showConsoleLog = showConsoleLog;
 window.checkLocalStorage = checkLocalStorage;
 window.logToSyslog = logToSyslog;
 window.debugToSyslog = debugToSyslog;
+window.debugInLINE = debugInLINE;
 
