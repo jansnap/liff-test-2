@@ -197,6 +197,19 @@ function openCamera() {
                         hasLocation: !!window.liffData.location
                     });
 
+                    // syslogに出力
+                    logToSyslog(`カメラ撮影完了 - 画像サイズ: ${dataUrl.length}文字`, 'INFO');
+                    debugToSyslog({
+                        imageSize: dataUrl.length,
+                        imageDataStart: dataUrl.substring(0, 100),
+                        imageDataEnd: dataUrl.substring(dataUrl.length - 100),
+                        liffData: {
+                            hasImageData: !!window.liffData.imageDataUrl,
+                            imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
+                            hasLocation: !!window.liffData.location
+                        }
+                    }, 'カメラ撮影データ詳細');
+
                     // 保存処理をPromiseでラップして確実に完了を待つ
                     const saveDataPromise = new Promise((resolve, reject) => {
                         try {
@@ -222,6 +235,7 @@ function openCamera() {
 
                             if (dataSize > (5 * 1024 * 1024)) {
                                 console.warn('データサイズが5MBを超えています。保存に失敗する可能性があります。');
+                                logToSyslog(`警告: データサイズが5MBを超えています (${dataSize}文字)`, 'WARN');
                             }
 
                             // sessionStorageとlocalStorageの両方に保存
@@ -247,6 +261,7 @@ function openCamera() {
                                 } else {
                                     console.error('保存確認失敗 - localStorage:', finalSavedData ? 'あり' : 'なし');
                                     console.error('保存確認失敗 - sessionStorage:', finalSessionData ? 'あり' : 'なし');
+                                    logToSyslog('エラー: データ保存の確認に失敗しました', 'ERROR');
                                     reject(new Error('データ保存の確認に失敗しました'));
                                 }
                             }, 500); // 500ms待機して保存完了を確認
@@ -281,6 +296,7 @@ function openCamera() {
                         console.log('最終プレビュー表示完了');
 
                         // 成功メッセージを表示
+                        logToSyslog('カメラ撮影とlocalStorage保存が完了しました', 'INFO');
                         const successMsg = document.createElement('div');
                         successMsg.style.cssText = `
                             position: fixed;
@@ -828,8 +844,48 @@ function checkLocalStorage() {
     }
 }
 
+// syslog出力用の関数
+function logToSyslog(message, level = 'INFO') {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] [${level}] LIFF_APP: ${message}`;
+
+    // コンソールに出力
+    console.log(logMessage);
+
+    // Android Logcatに出力（WebViewが対応している場合）
+    if (window.Android && window.Android.log) {
+        window.Android.log(logMessage);
+    }
+
+    // カスタムイベントとして発火（Android側でキャッチ可能）
+    const event = new CustomEvent('liffLog', {
+        detail: {
+            message: message,
+            level: level,
+            timestamp: timestamp
+        }
+    });
+    document.dispatchEvent(event);
+}
+
+// デバッグ用のsyslog出力関数
+function debugToSyslog(data, title = 'DEBUG') {
+    try {
+        const logData = {
+            title: title,
+            data: data,
+            timestamp: new Date().toISOString()
+        };
+        logToSyslog(`${title}: ${JSON.stringify(logData)}`, 'DEBUG');
+    } catch (e) {
+        logToSyslog(`デバッグ出力エラー: ${e.message}`, 'ERROR');
+    }
+}
+
 // グローバル関数として公開
 window.downloadConsoleLog = downloadConsoleLog;
 window.showConsoleLog = showConsoleLog;
 window.checkLocalStorage = checkLocalStorage;
+window.logToSyslog = logToSyslog;
+window.debugToSyslog = debugToSyslog;
 
