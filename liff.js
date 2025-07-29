@@ -186,6 +186,17 @@ function openCamera() {
                     window.liffData.imageDataUrl = dataUrl;
                     console.log('window.liffDataに画像データを設定:', window.liffData);
 
+                    // カメラ撮影時の詳細ログ
+                    console.log('=== カメラ撮影データ詳細 ===');
+                    console.log('画像データサイズ:', dataUrl.length, '文字');
+                    console.log('画像データの先頭100文字:', dataUrl.substring(0, 100));
+                    console.log('画像データの末尾100文字:', dataUrl.substring(dataUrl.length - 100));
+                    console.log('window.liffDataの構造:', {
+                        hasImageData: !!window.liffData.imageDataUrl,
+                        imageDataLength: window.liffData.imageDataUrl ? window.liffData.imageDataUrl.length : 0,
+                        hasLocation: !!window.liffData.location
+                    });
+
                     // 保存処理をPromiseでラップして確実に完了を待つ
                     const saveDataPromise = new Promise((resolve, reject) => {
                         try {
@@ -194,6 +205,24 @@ function openCamera() {
                             // データのJSON文字列化を確認
                             const dataToSave = JSON.stringify(window.liffData);
                             console.log('保存するデータ（JSON）:', dataToSave.substring(0, 100) + '...');
+
+                            // localStorageの容量制限を事前チェック
+                            const dataSize = dataToSave.length;
+                            console.log('保存しようとしているデータサイズ:', dataSize, '文字');
+
+                            // localStorageの現在の使用量をチェック
+                            let currentUsage = 0;
+                            for (let key in localStorage) {
+                                if (localStorage.hasOwnProperty(key)) {
+                                    currentUsage += localStorage[key].length;
+                                }
+                            }
+                            console.log('localStorage現在使用量:', currentUsage, '文字');
+                            console.log('localStorage残り容量推定:', (5 * 1024 * 1024) - currentUsage, '文字'); // 5MB制限を想定
+
+                            if (dataSize > (5 * 1024 * 1024)) {
+                                console.warn('データサイズが5MBを超えています。保存に失敗する可能性があります。');
+                            }
 
                             // sessionStorageとlocalStorageの両方に保存
                             sessionStorage.setItem('liffData', dataToSave);
