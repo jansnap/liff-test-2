@@ -970,6 +970,157 @@ function debugInLINE() {
     }
 }
 
+// localStorageの状態をポップアップで表示する関数
+function showLocalStoragePopup() {
+    try {
+        // 既存のポップアップを削除
+        const existingPopup = document.getElementById('localStorage-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // ポップアップを作成
+        const popup = document.createElement('div');
+        popup.id = 'localStorage-popup';
+        popup.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80%;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 10000;
+            font-family: monospace;
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        `;
+
+        // ヘッダー部分
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        `;
+        header.innerHTML = `
+            <h3 style="margin: 0; color: #007bff;">localStorage状態</h3>
+            <button onclick="document.getElementById('localStorage-popup').remove()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">閉じる</button>
+        `;
+        popup.appendChild(header);
+
+        // localStorageの内容を取得
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        `;
+
+        const logs = [];
+        const timestamp = new Date().toLocaleString();
+        logs.push(`[${timestamp}] localStorage状態確認\n`);
+
+        // 全localStorageアイテムを表示
+        logs.push('=== 全localStorageアイテム ===');
+        let totalSize = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            const size = value ? value.length : 0;
+            totalSize += size;
+
+            logs.push(`キー: ${key}`);
+            logs.push(`サイズ: ${size}文字`);
+
+            // liffDataの場合は詳細表示
+            if (key === 'liffData') {
+                try {
+                    const parsed = JSON.parse(value);
+                    logs.push(`  画像データ: ${parsed.imageDataUrl ? 'あり (' + parsed.imageDataUrl.length + '文字)' : 'なし'}`);
+                    logs.push(`  位置情報: ${parsed.location ? 'あり (' + JSON.stringify(parsed.location) + ')' : 'なし'}`);
+                } catch (e) {
+                    logs.push(`  解析エラー: ${e.message}`);
+                }
+            } else {
+                logs.push(`  値: ${value ? value.substring(0, 100) + (value.length > 100 ? '...' : '') : 'null'}`);
+            }
+            logs.push('');
+        }
+
+        logs.push(`=== 統計情報 ===`);
+        logs.push(`総アイテム数: ${localStorage.length}`);
+        logs.push(`総サイズ: ${totalSize}文字`);
+        logs.push(`推定容量: ${(totalSize / 1024).toFixed(2)}KB`);
+
+        content.textContent = logs.join('\n');
+        popup.appendChild(content);
+
+        document.body.appendChild(popup);
+        console.log('localStorage状態をポップアップで表示しました');
+    } catch (e) {
+        console.error('localStorageポップアップ表示エラー:', e);
+        alert('localStorage表示エラー: ' + e.message);
+    }
+}
+
+// localStorageの該当アイテムを削除する関数
+function clearLocalStorage() {
+    try {
+        const result = confirm('localStorageのliffDataを削除しますか？\n\nこの操作により、保存された画像データと位置情報が失われます。');
+
+        if (result) {
+            // liffDataを削除
+            localStorage.removeItem('liffData');
+
+            // window.liffDataもクリア
+            if (window.liffData) {
+                window.liffData = { imageDataUrl: null, location: null };
+            }
+
+            // プレビューをクリア
+            const photoPreview = document.getElementById('photo-preview');
+            if (photoPreview) {
+                photoPreview.innerHTML = '';
+                photoPreview.style.background = '';
+            }
+
+            const locationPreview = document.getElementById('location-preview');
+            if (locationPreview) {
+                locationPreview.innerHTML = '';
+            }
+
+            // 成功メッセージ
+            alert('localStorageのliffDataを削除しました。\n\n画像データと位置情報がクリアされました。');
+
+            // ログ出力
+            logToSyslog('localStorage liffDataを削除しました', 'INFO');
+
+            // ログ表示を更新（表示中の場合）
+            if (document.getElementById('log-content')) {
+                updateLogDisplay();
+            }
+
+            console.log('localStorage liffDataを削除しました');
+        }
+    } catch (e) {
+        console.error('localStorage削除エラー:', e);
+        alert('localStorage削除エラー: ' + e.message);
+    }
+}
+
 // グローバル関数として公開
 window.downloadConsoleLog = downloadConsoleLog;
 window.showConsoleLog = showConsoleLog;
@@ -980,4 +1131,6 @@ window.debugInLINE = debugInLINE;
 window.updateLogDisplay = updateLogDisplay;
 window.refreshLogDisplay = refreshLogDisplay;
 window.closeLogDisplay = closeLogDisplay;
+window.showLocalStoragePopup = showLocalStoragePopup;
+window.clearLocalStorage = clearLocalStorage;
 

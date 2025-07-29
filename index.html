@@ -30,7 +30,8 @@
     <div class="mt-4 p-3 border rounded" style="background-color: #f8f9fa;">
         <h6>デバッグ用</h6>
         <button type="button" class="btn btn-sm btn-info mr-2" onclick="debugInLINE()">LINEデバッグ</button>
-        <button type="button" class="btn btn-sm btn-warning mr-2" onclick="checkLocalStorage()">localStorage確認</button>
+        <button type="button" class="btn btn-sm btn-warning mr-2" onclick="showLocalStoragePopup()">localStorage確認</button>
+        <button type="button" class="btn btn-sm btn-danger mr-2" onclick="clearLocalStorage()">localStorage削除</button>
         <button type="button" class="btn btn-sm btn-success mr-2" onclick="showConsoleLog()">ログ表示</button>
         <button type="button" class="btn btn-sm btn-secondary" onclick="logToSyslog('手動テスト', 'INFO')">syslogテスト</button>
     </div>
