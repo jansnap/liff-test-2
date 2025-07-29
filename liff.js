@@ -724,6 +724,9 @@ function downloadConsoleLog() {
     }
 }
 
+// リアルタイムログ表示用のグローバル変数
+window.logDisplayInterval = null;
+
 // コンソールログを画面に表示する関数
 function showConsoleLog() {
     try {
@@ -731,6 +734,11 @@ function showConsoleLog() {
         const existingLog = document.getElementById('console-log-display');
         if (existingLog) {
             existingLog.remove();
+        }
+
+        // 既存のインターバルをクリア
+        if (window.logDisplayInterval) {
+            clearInterval(window.logDisplayInterval);
         }
 
         // ログ表示エリアを作成
@@ -765,50 +773,110 @@ function showConsoleLog() {
             border-bottom: 1px solid #dee2e6;
         `;
         header.innerHTML = `
-            <h3 style="margin: 0; color: #007bff;">コンソールログ</h3>
+            <h3 style="margin: 0; color: #007bff;">リアルタイムログ表示</h3>
             <div>
+                <button onclick="refreshLogDisplay()" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; margin-right: 5px; border-radius: 3px; cursor: pointer;">更新</button>
                 <button onclick="downloadConsoleLog()" style="background: #28a745; color: white; border: none; padding: 5px 10px; margin-right: 5px; border-radius: 3px; cursor: pointer;">ダウンロード</button>
-                <button onclick="document.getElementById('console-log-display').remove()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">閉じる</button>
+                <button onclick="closeLogDisplay()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">閉じる</button>
             </div>
         `;
         logDisplay.appendChild(header);
 
-        // ログ内容
-        const debugLog = localStorage.getItem('debugLog');
-        if (debugLog) {
-            const debugArray = JSON.parse(debugLog);
-            const logContent = document.createElement('div');
-            logContent.style.cssText = `
-                background: #f8f9fa;
-                padding: 10px;
-                border-radius: 5px;
-                white-space: pre-wrap;
-                word-break: break-all;
-            `;
-
-            const logText = debugArray.map(entry => {
-                const timestamp = new Date(entry.timestamp).toLocaleString();
-                return `[${timestamp}] ${entry.title}:\n${JSON.stringify(entry.data, null, 2)}\n`;
-            }).join('\n');
-
-            logContent.textContent = logText;
-            logDisplay.appendChild(logContent);
-        } else {
-            const noLogMsg = document.createElement('div');
-            noLogMsg.textContent = 'ログがありません';
-            noLogMsg.style.cssText = `
-                text-align: center;
-                color: #6c757d;
-                padding: 20px;
-            `;
-            logDisplay.appendChild(noLogMsg);
-        }
+        // ログ内容エリア
+        const logContent = document.createElement('div');
+        logContent.id = 'log-content';
+        logContent.style.cssText = `
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        `;
+        logDisplay.appendChild(logContent);
 
         document.body.appendChild(logDisplay);
-        console.log('コンソールログを画面に表示しました');
+
+        // リアルタイム更新を開始
+        updateLogDisplay();
+        window.logDisplayInterval = setInterval(updateLogDisplay, 1000); // 1秒ごとに更新
+
+        console.log('リアルタイムログ表示を開始しました');
     } catch (e) {
         console.error('コンソールログ表示エラー:', e);
         alert('ログ表示エラー: ' + e.message);
+    }
+}
+
+// ログ表示を更新する関数
+function updateLogDisplay() {
+    try {
+        const logContent = document.getElementById('log-content');
+        if (!logContent) return;
+
+        const logs = [];
+        const timestamp = new Date().toLocaleString();
+
+        // localStorageの状態
+        const liffData = localStorage.getItem('liffData');
+        if (liffData) {
+            try {
+                const parsed = JSON.parse(liffData);
+                logs.push(`[${timestamp}] localStorage liffData:`);
+                logs.push(`  画像データ: ${parsed.imageDataUrl ? 'あり (' + parsed.imageDataUrl.length + '文字)' : 'なし'}`);
+                logs.push(`  位置情報: ${parsed.location ? 'あり (' + JSON.stringify(parsed.location) + ')' : 'なし'}`);
+            } catch (e) {
+                logs.push(`[${timestamp}] localStorage解析エラー: ${e.message}`);
+            }
+        } else {
+            logs.push(`[${timestamp}] localStorage liffData: なし`);
+        }
+
+        // window.liffDataの状態
+        if (window.liffData) {
+            logs.push(`[${timestamp}] window.liffData:`);
+            logs.push(`  画像データ: ${window.liffData.imageDataUrl ? 'あり (' + window.liffData.imageDataUrl.length + '文字)' : 'なし'}`);
+            logs.push(`  位置情報: ${window.liffData.location ? 'あり (' + JSON.stringify(window.liffData.location) + ')' : 'なし'}`);
+        } else {
+            logs.push(`[${timestamp}] window.liffData: 未定義`);
+        }
+
+        // LIFF SDKの状態
+        if (typeof liff !== 'undefined') {
+            logs.push(`[${timestamp}] LIFF SDK:`);
+            logs.push(`  バージョン: ${liff.getVersion()}`);
+            logs.push(`  アプリ内: ${liff.isInClient()}`);
+            logs.push(`  ログイン状態: ${liff.isLoggedIn()}`);
+        } else {
+            logs.push(`[${timestamp}] LIFF SDK: 未読み込み`);
+        }
+
+        // 最近の操作ログ
+        logs.push(`[${timestamp}] 最近の操作:`);
+        logs.push(`  カメラ撮影: ${typeof openCamera === 'function' ? '利用可能' : '未定義'}`);
+        logs.push(`  位置情報取得: ${typeof getLocation === 'function' ? '利用可能' : '未定義'}`);
+
+        logContent.textContent = logs.join('\n');
+    } catch (e) {
+        console.error('ログ表示更新エラー:', e);
+    }
+}
+
+// ログ表示を手動更新
+function refreshLogDisplay() {
+    updateLogDisplay();
+}
+
+// ログ表示を閉じる
+function closeLogDisplay() {
+    const existingLog = document.getElementById('console-log-display');
+    if (existingLog) {
+        existingLog.remove();
+    }
+    if (window.logDisplayInterval) {
+        clearInterval(window.logDisplayInterval);
+        window.logDisplayInterval = null;
     }
 }
 
@@ -909,4 +977,7 @@ window.checkLocalStorage = checkLocalStorage;
 window.logToSyslog = logToSyslog;
 window.debugToSyslog = debugToSyslog;
 window.debugInLINE = debugInLINE;
+window.updateLogDisplay = updateLogDisplay;
+window.refreshLogDisplay = refreshLogDisplay;
+window.closeLogDisplay = closeLogDisplay;
 
